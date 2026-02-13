@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.chumakov123.data"
+    namespace = "com.chumakov123.casedocket.data"
     compileSdk {
         version = release(36)
     }
@@ -37,7 +37,11 @@ android {
 dependencies {
     implementation(project(":domain"))
 
+    implementation(libs.tesseract4android)
+    implementation(libs.opencv)
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.kotlinx.coroutines.core)
 }

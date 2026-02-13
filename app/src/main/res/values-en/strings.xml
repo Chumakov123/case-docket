@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Judge Assistant</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="recognized_cases_title">Recognized cases:</string>
+    <string name="new_test_recognition">New test recognition</string>
+    <string name="schedule_title">Court Schedule</string>
+    <string name="schedule_instruction">Check and correct recognized data if necessary</string>
+    <string name="date_label">Date</string>
+    <string name="date_placeholder">Date not specified</string>
+    <string name="judge_label">Judge</string>
+    <string name="judge_placeholder">Judge\'s name not specified</string>
+    <string name="total_cases">Total cases: %d</string>
+    <string name="processing">Processing…</string>
+    <string name="success">Recognized successfully</string>
+    <string name="error">Recognition error</string>
+    <string name="processing_time">Time: %d ms</string>
+    <string name="test_recognition">Test recognition</string>
+    <string name="test_recognition_description">Click the button below to test recognition from a demo image</string>
+    <string name="start_test_recognition">Start test recognition</string>
+    <string name="loading_wait_message">This may take a few seconds</string>
+    <string name="case_number_placeholder">Enter case number</string>
+    <string name="time_placeholder">--:--</string>
+    <string name="description_placeholder">Add case description</string>
+    <string name="edit_case_number_title">Case number</string>
+    <string name="edit_time_title">Time</string>
+    <string name="edit_description_title">Case description</string>
+    <string name="error_title">Recognition error</string>
+    <string name="error_default_message">Failed to recognize schedule</string>
+    <string name="retry_button">Retry</string>
+    <string name="settings">Settings</string>
+</resources>

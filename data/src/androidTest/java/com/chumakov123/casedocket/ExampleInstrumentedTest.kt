@@ -1,4 +1,4 @@
-package com.chumakov123.data
+package com.chumakov123.casedocket
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

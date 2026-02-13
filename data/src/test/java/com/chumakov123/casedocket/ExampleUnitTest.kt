@@ -1,4 +1,4 @@
-package com.chumakov123.data
+package com.chumakov123.casedocket
 
 import org.junit.Test
 

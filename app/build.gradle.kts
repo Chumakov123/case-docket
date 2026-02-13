@@ -45,6 +45,25 @@ dependencies {
     implementation(project(":domain"))
     implementation(project(":data"))
 
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core)
+    implementation(libs.insert.koin.koin.android)
+    implementation(libs.insert.koin.koin.androidx.compose)
+    implementation(libs.koin.androidx.workmanager)
+
+    //implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation(libs.tesseract4android)
+    implementation(libs.opencv)
+
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.ktx.v2100)
+
+    implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.coil.compose)
+
+    implementation(libs.androidx.compose.material.icons.extended)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
