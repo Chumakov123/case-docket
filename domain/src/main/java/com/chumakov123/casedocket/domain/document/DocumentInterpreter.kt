@@ -18,12 +18,30 @@ class DocumentInterpreter {
         return CourtScheduleDraft(
             date = extractDate(headerText),
             judge = extractJudge(headerText),
-            cases = rows.map { row ->
-                CourtCaseDraft(
-                    caseNumber = cleanCaseNumber(row.caseNumberText),
-                    time = rawTimeToCaseTime(row.timeText),
-                    description = CourtCaseDescription(cleanDescription(row.descriptionText))
-                )
+            cases = rows.mapNotNull { row ->
+                val caseNumber = cleanCaseNumber(row.caseNumberText)
+                val time = rawTimeToCaseTime(row.timeText)
+                val description = CourtCaseDescription(cleanDescription(row.descriptionText))
+
+                // Создаем элемент только если хотя бы одно из полей не пустое
+                when {
+                    caseNumber.isNotBlank() -> CourtCaseDraft(
+                        caseNumber = caseNumber,
+                        time = time,
+                        description = description
+                    )
+                    time != null -> CourtCaseDraft(
+                        caseNumber = caseNumber,
+                        time = time,
+                        description = description
+                    )
+                    description.text.isNotBlank() -> CourtCaseDraft(
+                        caseNumber = caseNumber,
+                        time = time,
+                        description = description
+                    )
+                    else -> null
+                }
             }
         )
     }

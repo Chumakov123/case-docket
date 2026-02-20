@@ -21,15 +21,15 @@ class RecognizeScheduleUseCase(
 
         val layout = analyzer.analyze(processedImage)
 
-        val headerText = ocr.recognizeTextInRegion(processedImage, layout.headerRegion)
+        val headerText = ocr.recognizeTextInRegion(layout.headerImage)
 
         val extractedRows = tableParser.extractRows(layout)
 
         val tableRowsText = extractedRows.map { row ->
             TableRowText(
-                ocr.recognizeTextInRegion(processedImage, row.caseNumber),
-                ocr.recognizeTextInRegion(processedImage, row.time),
-                ocr.recognizeTextInRegion(processedImage, row.description)
+                ocr.recognizeTextInRegion(layout.tableImage, row.caseNumber),
+                ocr.recognizeTextInRegion(layout.tableImage, row.time),
+                ocr.recognizeTextInRegion(layout.tableImage, row.description)
             )
         }
 

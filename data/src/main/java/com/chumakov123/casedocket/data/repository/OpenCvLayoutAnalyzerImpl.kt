@@ -3,280 +3,311 @@ package com.chumakov123.casedocket.data.repository
 import com.chumakov123.casedocket.domain.model.imaging.DocumentLayout
 import com.chumakov123.casedocket.domain.model.imaging.ImageRegion
 import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
+import com.chumakov123.casedocket.domain.repository.ImageSaver
 import org.opencv.core.Core
+import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
 import org.opencv.core.MatOfPoint
+import org.opencv.core.MatOfPoint2f
 import org.opencv.core.Point
-import org.opencv.core.Rect
+import org.opencv.core.Scalar
 import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
-class OpenCvLayoutAnalyzerImpl : ImageLayoutAnalyzer {
+class OpenCvLayoutAnalyzerImpl(
+    private val imageSaver: ImageSaver?
+) : ImageLayoutAnalyzer {
 
     override suspend fun analyze(imageBytes: ByteArray): DocumentLayout {
-        // decode
-        val buf = MatOfByte(*imageBytes)
-        val original = Imgcodecs.imdecode(buf, Imgcodecs.IMREAD_COLOR)
-        buf.release()
 
-        if (original.empty()) {
-            throw IllegalArgumentException("Cannot decode image bytes")
+        val src = Imgcodecs.imdecode(MatOfByte(*imageBytes), Imgcodecs.IMREAD_GRAYSCALE)
+            ?: throw IllegalArgumentException("Cannot decode image")
+
+        val h = src.rows()
+        val w = src.cols()
+
+        /* ================================
+           Поиск области таблицы
+           ================================ */
+
+        val mask = Mat()
+        Core.bitwise_not(src, mask)
+
+        val kernelClose = Imgproc.getStructuringElement(
+            Imgproc.MORPH_RECT,
+            Size(9.0, 9.0)
+        )
+
+        val tableMask = Mat()
+        Imgproc.morphologyEx(mask, tableMask, Imgproc.MORPH_CLOSE, kernelClose)
+
+        val contours = mutableListOf<MatOfPoint>()
+        Imgproc.findContours(
+            tableMask,
+            contours,
+            Mat(),
+            Imgproc.RETR_EXTERNAL,
+            Imgproc.CHAIN_APPROX_SIMPLE
+        )
+
+        val tableBin: Mat = if (contours.isEmpty()) {
+            src.clone()
+        } else {
+            val largest = contours.maxByOrNull { Imgproc.contourArea(it) }!!
+            val area = Imgproc.contourArea(largest)
+
+            if (area < 0.01 * (w * h)) {
+                src.clone()
+            } else {
+                val peri = Imgproc.arcLength(MatOfPoint2f(*largest.toArray()), true)
+                val approx = MatOfPoint2f()
+                Imgproc.approxPolyDP(
+                    MatOfPoint2f(*largest.toArray()),
+                    approx,
+                    0.02 * peri,
+                    true
+                )
+
+                if (approx.total() == 4L) {
+                    fourPointTransform(src, approx.toArray())
+                } else {
+                    cropByBoundingRect(src, largest, 8)
+                }
+            }
         }
 
-        try {
-            // подготовим grayscale (нужно для морфологии и threshold)
-            val gray = Mat()
-            if (original.channels() == 3) {
-                Imgproc.cvtColor(original, gray, Imgproc.COLOR_BGR2GRAY)
-            } else {
-                original.copyTo(gray)
-            }
+        /* ================================
+           Делим header / table
+           ================================ */
 
-            // Бинаризация (локальная) — параметры можно подправить под предобработку
-            val binary = Mat()
-            Imgproc.adaptiveThreshold(
-                gray, binary, 255.0,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY, 19, 5.0
-            )
+        val tableTop = findTableTop(src, tableBin)
 
-            // Для детекции линий удобно иметь инверт (линии белые)
-            val inverted = Mat()
-            Core.bitwise_not(binary, inverted)
+        val headerMat = if (tableTop > 0)
+            src.submat(0, tableTop, 0, w)
+        else
+            Mat.zeros(1, 1, CvType.CV_8U)
 
-            // Морфология для маски таблицы (close, чтобы соединить линии)
-            val kernelClose = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(9.0, 9.0))
-            val tableMask = Mat()
-            Imgproc.morphologyEx(inverted, tableMask, Imgproc.MORPH_CLOSE, kernelClose)
+        /* ================================
+           Построение сетки
+           ================================ */
 
-            // Найдём контуры и выберем самый большой как таблицу
-            val contours = ArrayList<MatOfPoint>()
-            val hierarchy = Mat()
-            Imgproc.findContours(tableMask, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
-            hierarchy.release()
+        val gridResult = buildGrid(tableBin)
 
-            val hImg = original.rows()
-            val wImg = original.cols()
+        val debugGridImage = gridResult.debugImage
+        val tableWithoutGrid = tableBin.clone()
+        val headerBytes = matToBytes(headerMat)
 
-            var tableRect = Rect(0, 0, wImg, hImg) // дефолт — вся картинка
+        imageSaver?.save(matToBytes(debugGridImage), "table_grid")
+        imageSaver?.save(matToBytes(tableWithoutGrid), "table")
+        imageSaver?.save(headerBytes, "header")
 
-            if (contours.isNotEmpty()) {
-                val largest = contours.maxByOrNull { Imgproc.contourArea(it) }!!
-                val area = Imgproc.contourArea(largest)
-                if (area > 0.01 * (wImg.toDouble() * hImg.toDouble())) {
-                    val br = Imgproc.boundingRect(largest)
-                    // немного запаса
-                    val margin = 8
-                    val x = max(0, br.x - margin)
-                    val y = max(0, br.y - margin)
-                    val x2 = min(wImg, br.x + br.width + margin)
-                    val y2 = min(hImg, br.y + br.height + margin)
-                    tableRect = Rect(x, y, x2 - x, y2 - y)
-                }
-            }
 
-            // headerRegion: от верхнего края изображения до верхней границы таблицы (exclusive)
-            val headerBottom = tableRect.y.coerceAtLeast(0)
-            val headerRegion = if (headerBottom >= 4) {
-                ImageRegion(0, 0, wImg, headerBottom)
-            } else {
-                // пустой регион (высота 0) если заголовка нет
-                ImageRegion(0, 0, wImg, 0)
-            }
+        return DocumentLayout(
+            headerImage = matToBytes(headerMat),
+            tableImage = matToBytes(tableWithoutGrid),
+            tableCells = gridResult.cells
+        )
+    }
 
-            // Вырежем область таблицы для детекции линий внутри неё
-            val tableMat = Mat(original, tableRect).clone()
+    /* ========================================================= */
 
-            // Переконвертим в grayscale + бинарный для детекции линий
-            val tableGray = Mat()
-            if (tableMat.channels() == 3) {
-                Imgproc.cvtColor(tableMat, tableGray, Imgproc.COLOR_BGR2GRAY)
-            } else {
-                tableMat.copyTo(tableGray)
-            }
+    private fun buildGrid(tableBin: Mat): GridResult {
 
-            // Адаптативная бинаризация (локально)
-            val tableBinary = Mat()
-            Imgproc.adaptiveThreshold(
-                tableGray, tableBinary, 255.0,
-                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C,
-                Imgproc.THRESH_BINARY, 21, 8.0
-            )
+        val h = tableBin.rows()
+        val w = tableBin.cols()
 
-            // invert для того, чтобы линии стали белыми на чёрном фоне
-            val tableInv = Mat()
-            Core.bitwise_not(tableBinary, tableInv)
+        val verts = detectVerticalLines(tableBin)
+        val horz = detectHorizontalLines(tableBin)
 
-            // детекция вертикалей и горизонталей методом морфологического открытия
-            fun detectPositions(isVertical: Boolean, kernelSize: Size, minLineRatio: Double = 0.5): MutableList<Int> {
-                val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, kernelSize)
-                val opened = Mat()
-                Imgproc.morphologyEx(tableInv, opened, Imgproc.MORPH_OPEN, kernel,
-                    Point(-1.0, -1.0), 1)
+        val finalVerts = finalizePositions(verts, w)
+        val finalHorz = finalizePositions(horz, h)
 
-                val contoursLocal = ArrayList<MatOfPoint>()
-                Imgproc.findContours(opened, contoursLocal, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        val cells = mutableListOf<List<ImageRegion>>()
 
-                val positions = mutableListOf<Int>()
-                for (c in contoursLocal) {
-                    val r = Imgproc.boundingRect(c)
-                    if (isVertical) {
-                        // высокая компонента по высоте относительно высоты таблицы
-                        if (r.height >= minLineRatio * tableMat.rows()) {
-                            positions.add(r.x + r.width / 2)
-                        }
-                    } else {
-                        // широкая компонента по ширине
-                        if (r.width >= minLineRatio * tableMat.cols()) {
-                            positions.add(r.y + r.height / 2)
-                        }
-                    }
-                }
-                opened.release()
-                return positions
-            }
+        for (r in 0 until finalHorz.size - 1) {
+            val row = mutableListOf<ImageRegion>()
+            for (c in 0 until finalVerts.size - 1) {
 
-            val vKernelWidth = 1
-            val vKernelHeight = (max(10, (0.02 * tableMat.rows()).toInt())).coerceAtLeast(15)
-            val hKernelWidth = (max(10, (0.02 * tableMat.cols()).toInt())).coerceAtLeast(15)
-            val hKernelHeight = 1
+                val x0 = finalVerts[c]
+                val x1 = finalVerts[c + 1]
+                val y0 = finalHorz[r]
+                val y1 = finalHorz[r + 1]
 
-            val rawV = detectPositions(true, Size(vKernelWidth.toDouble(), vKernelHeight.toDouble()))
-            val rawH = detectPositions(false, Size(hKernelWidth.toDouble(), hKernelHeight.toDouble()))
-
-            // helper: merge close positions
-            fun mergePositions(positions: List<Int>, tol: Int): List<Int> {
-                if (positions.isEmpty()) return listOf()
-                val sorted = positions.sorted()
-                val merged = ArrayList<Int>()
-                var cur = sorted[0]
-                for (i in 1 until sorted.size) {
-                    val p = sorted[i]
-                    if (p - cur <= tol) {
-                        // среднее между cur и p
-                        cur = (cur + p) / 2
-                    } else {
-                        merged.add(cur)
-                        cur = p
-                    }
-                }
-                merged.add(cur)
-                return merged
-            }
-
-            val tolMerge = max(4, (0.01 * tableMat.cols()).toInt())
-            var verts = mergePositions(rawV, tolMerge).toMutableList()
-            var horz = mergePositions(rawH, tolMerge).toMutableList()
-
-            // если не нашли линий — добавим края (в координатах tableMat)
-            val tw = tableMat.cols()
-            val th = tableMat.rows()
-
-            if (verts.isEmpty()) {
-                verts.add(0); verts.add(tw - 1)
-            }
-            if (horz.isEmpty()) {
-                horz.add(0); horz.add(th - 1)
-            }
-
-            // snap to edges: если край близок — установим в 0 или tw-1
-            val edgeSnapTol = max(8, (0.01 * tw).toInt())
-            if (verts.first() <= edgeSnapTol) verts[0] = 0 else verts.add(0, 0)
-            if ((tw - 1 - verts.last()) <= edgeSnapTol) verts[verts.lastIndex] = tw - 1 else verts.add(tw - 1)
-
-            val edgeSnapTolH = max(8, (0.01 * th).toInt())
-            if (horz.first() <= edgeSnapTolH) horz[0] = 0 else horz.add(0, 0)
-            if ((th - 1 - horz.last()) <= edgeSnapTolH) horz[horz.lastIndex] = th - 1 else horz.add(th - 1)
-
-            // ещё раз объединяем и сортируем
-            verts = mergePositions(verts, tolMerge).toMutableList()
-            horz = mergePositions(horz, tolMerge).toMutableList()
-            verts.sort()
-            horz.sort()
-
-            // фильтр позиций по минимальному размеру ячейки
-            fun filterPositions(posList: List<Int>, minSize: Int): List<Int> {
-                if (posList.size < 2) return posList
-                val filtered = ArrayList<Int>()
-                filtered.add(posList[0])
-                for (i in 0 until posList.size - 1) {
-                    val size = posList[i + 1] - filtered.last()
-                    if (size >= minSize) {
-                        filtered.add(posList[i + 1])
-                    } else {
-                        // пропускаем слишком близкую позицию
-                        continue
-                    }
-                }
-                if (filtered.last() != posList.last()) filtered.add(posList.last())
-                return filtered.distinct().sorted()
-            }
-
-            val minCellSize = max(8, (0.01 * tw).toInt())
-            verts = filterPositions(verts, minCellSize).toMutableList()
-            horz = filterPositions(horz, max(8, (0.01 * th).toInt())).toMutableList()
-
-            // Ensure edges present
-            if (verts.first() != 0) verts.add(0, 0)
-            if (verts.last() != tw - 1) verts.add(tw - 1)
-            if (horz.first() != 0) horz.add(0, 0)
-            if (horz.last() != th - 1) horz.add(th - 1)
-
-            verts.sort()
-            horz.sort()
-
-            // Построим матрицу ImageRegion — в координатах оригинального processed image
-            val tableCells = ArrayList<List<ImageRegion>>()
-            for (r in 0 until horz.size - 1) {
-                val row = ArrayList<ImageRegion>()
-                val y1 = horz[r]
-                val y2 = horz[r + 1]
-                val height = y2 - y1
-                if (height < 1) continue
-                for (c in 0 until verts.size - 1) {
-                    val x1 = verts[c]
-                    val x2 = verts[c + 1]
-                    val width = x2 - x1
-                    if (width < 1) continue
-                    // coords relative to original image
-                    val absX = tableRect.x + x1
-                    val absY = tableRect.y + y1
-                    row.add(ImageRegion(absX, absY, width, height))
-                }
-                if (row.isNotEmpty()) tableCells.add(row)
-            }
-
-            // Если tableCells пустой — вернём хотя бы одну ячейку-таблицу (вся таблица)
-            if (tableCells.isEmpty()) {
-                val single = listOf(
+                row.add(
                     ImageRegion(
-                        tableRect.x,
-                        tableRect.y,
-                        tableRect.width,
-                        tableRect.height
+                        x = x0,
+                        y = y0,
+                        width = x1 - x0,
+                        height = y1 - y0
                     )
                 )
-                tableCells.add(single)
             }
-
-            // освобождение mats
-            gray.release()
-            binary.release()
-            inverted.release()
-            tableMask.release()
-            tableMat.release()
-            tableGray.release()
-            tableBinary.release()
-            tableInv.release()
-            kernelClose.release()
-
-            return DocumentLayout(headerRegion = headerRegion, tableCells = tableCells)
-        } finally {
-            original.release()
+            cells.add(row)
         }
+
+        val debug = tableBin.clone()
+        Imgproc.cvtColor(debug, debug, Imgproc.COLOR_GRAY2BGR)
+
+        finalVerts.forEach {
+            Imgproc.line(debug, Point(it.toDouble(), 0.0), Point(it.toDouble(), h.toDouble()),
+                Scalar(0.0, 255.0, 0.0), 1)
+        }
+
+        finalHorz.forEach {
+            Imgproc.line(debug, Point(0.0, it.toDouble()), Point(w.toDouble(), it.toDouble()),
+                Scalar(0.0, 255.0, 0.0), 1)
+        }
+
+        return GridResult(debug, cells)
     }
+
+    /* ========================================================= */
+
+    private fun detectVerticalLines(image: Mat): List<Int> {
+        val inverted = Mat()
+        Core.bitwise_not(image, inverted)
+
+        val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(1.0, 15.0))
+        val opened = Mat()
+        Imgproc.morphologyEx(inverted, opened, Imgproc.MORPH_OPEN, kernel)
+
+        val contours = mutableListOf<MatOfPoint>()
+        Imgproc.findContours(opened, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        val h = image.rows()
+        return contours
+            .map { Imgproc.boundingRect(it) }
+            .filter { it.height >= 0.5 * h }
+            .map { it.x + it.width / 2 }
+            .let { mergePositions(it, max(4, (image.cols() * 0.01).toInt())) }
+    }
+
+    private fun detectHorizontalLines(image: Mat): List<Int> {
+        val inverted = Mat()
+        Core.bitwise_not(image, inverted)
+
+        val kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(15.0, 1.0))
+        val opened = Mat()
+        Imgproc.morphologyEx(inverted, opened, Imgproc.MORPH_OPEN, kernel)
+
+        val contours = mutableListOf<MatOfPoint>()
+        Imgproc.findContours(opened, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+
+        val w = image.cols()
+        return contours
+            .map { Imgproc.boundingRect(it) }
+            .filter { it.width >= 0.5 * w }
+            .map { it.y + it.height / 2 }
+            .let { mergePositions(it, max(4, (image.rows() * 0.01).toInt())) }
+    }
+
+    private fun mergePositions(positions: List<Int>, tol: Int): List<Int> {
+        if (positions.isEmpty()) return emptyList()
+
+        val sorted = positions.sorted()
+        val merged = mutableListOf<Int>()
+
+        var group = mutableListOf(sorted.first())
+
+        for (i in 1 until sorted.size) {
+            if (abs(sorted[i] - group.last()) <= tol) {
+                group.add(sorted[i])
+            } else {
+                merged.add(group.average().roundToInt())
+                group = mutableListOf(sorted[i])
+            }
+        }
+
+        merged.add(group.average().roundToInt())
+        return merged
+    }
+
+    private fun finalizePositions(input: List<Int>, size: Int): List<Int> {
+        val result = input.toMutableList()
+
+        if (result.isEmpty()) {
+            return listOf(0, size - 1)
+        }
+
+        if (result.first() != 0) result.add(0)
+        if (result.last() != size - 1) result.add(size - 1)
+
+        return result.sorted()
+    }
+
+    private fun cropByBoundingRect(src: Mat, contour: MatOfPoint, margin: Int): Mat {
+        val rect = Imgproc.boundingRect(contour)
+
+        val x0 = max(rect.x - margin, 0)
+        val y0 = max(rect.y - margin, 0)
+        val x1 = min(rect.x + rect.width + margin, src.cols())
+        val y1 = min(rect.y + rect.height + margin, src.rows())
+
+        return src.submat(y0, y1, x0, x1)
+    }
+
+    private fun fourPointTransform(src: Mat, pts: Array<Point>): Mat {
+        val sorted = sortPoints(pts)
+
+        val widthA = distance(sorted[2], sorted[3])
+        val widthB = distance(sorted[1], sorted[0])
+        val maxWidth = max(widthA, widthB).roundToInt()
+
+        val heightA = distance(sorted[1], sorted[2])
+        val heightB = distance(sorted[0], sorted[3])
+        val maxHeight = max(heightA, heightB).roundToInt()
+
+        val dst = MatOfPoint2f(
+            Point(0.0, 0.0),
+            Point(maxWidth - 1.0, 0.0),
+            Point(maxWidth - 1.0, maxHeight - 1.0),
+            Point(0.0, maxHeight - 1.0)
+        )
+
+        val transform = Imgproc.getPerspectiveTransform(
+            MatOfPoint2f(*sorted),
+            dst
+        )
+
+        val warped = Mat()
+        Imgproc.warpPerspective(src, warped, transform, Size(maxWidth.toDouble(), maxHeight.toDouble()))
+
+        return warped
+    }
+
+    private fun sortPoints(pts: Array<Point>): Array<Point> {
+        val sumSorted = pts.sortedBy { it.x + it.y }
+        val diffSorted = pts.sortedBy { it.y - it.x }
+
+        return arrayOf(
+            sumSorted.first(),
+            diffSorted.first(),
+            sumSorted.last(),
+            diffSorted.last()
+        )
+    }
+
+    private fun distance(a: Point, b: Point): Double =
+        Math.hypot(a.x - b.x, a.y - b.y)
+
+    private fun findTableTop(original: Mat, table: Mat): Int {
+        return max(0, original.rows() - table.rows())
+    }
+
+    private fun matToBytes(mat: Mat): ByteArray {
+        val buf = MatOfByte()
+        Imgcodecs.imencode(".png", mat, buf)
+        return buf.toArray()
+    }
+
+    private data class GridResult(
+        val debugImage: Mat,
+        val cells: List<List<ImageRegion>>
+    )
 }

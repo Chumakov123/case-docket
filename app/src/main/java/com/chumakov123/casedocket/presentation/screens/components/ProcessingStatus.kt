@@ -1,4 +1,4 @@
-package com.chumakov123.casedocket.presentation.screens
+package com.chumakov123.casedocket.presentation.screens.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

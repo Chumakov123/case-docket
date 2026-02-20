@@ -76,7 +76,7 @@ class TesseractOcrServiceImpl(
 
     override suspend fun recognizeTextInRegion(
         imageBytes: ByteArray,
-        region: ImageRegion
+        region: ImageRegion?
     ): String = withContext(Dispatchers.Default) {
 
         if (!isInitialized || tessApi == null) {
@@ -91,43 +91,55 @@ class TesseractOcrServiceImpl(
                 imageBytes.size
             ) ?: return@withContext ""
 
-            // 2. Защита от выхода за границы изображения
-            val safeRect = Rect(
-                max(0, region.x),
-                max(0, region.y),
-                min(originalBitmap.width, region.x + region.width),
-                min(originalBitmap.height, region.y + region.height)
-            )
+            var result = ""
 
-            if (safeRect.width() <= 0 || safeRect.height() <= 0) {
+            if (region == null) {
+                // Распознаем весь bitmap целиком
+                tessApi!!.clear()
+                tessApi!!.setImage(originalBitmap)
+                result = tessApi!!.utF8Text ?: ""
                 originalBitmap.recycle()
-                return@withContext ""
+            } else {
+                // 2. Защита от выхода за границы изображения
+                val safeRect = Rect(
+                    max(0, region.x),
+                    max(0, region.y),
+                    min(originalBitmap.width, region.x + region.width),
+                    min(originalBitmap.height, region.y + region.height)
+                )
+
+                if (safeRect.width() <= 0 || safeRect.height() <= 0) {
+                    originalBitmap.recycle()
+                    return@withContext ""
+                }
+
+                // 3. Кроп региона
+                val croppedBitmap = Bitmap.createBitmap(
+                    originalBitmap,
+                    safeRect.left,
+                    safeRect.top,
+                    safeRect.width(),
+                    safeRect.height()
+                )
+
+                originalBitmap.recycle()
+
+                // 4. Tesseract ОЧИСТКА (ВАЖНО)
+                tessApi!!.clear()
+
+                // 5. Передаем изображение
+                tessApi!!.setImage(croppedBitmap)
+
+                // (необязательно, но сильно повышает качество)
+                tessApi!!.setRectangle(0, 0, croppedBitmap.width, croppedBitmap.height)
+
+                // 6. Распознавание
+                result = tessApi!!.utF8Text ?: ""
+
+                croppedBitmap.recycle()
             }
 
-            // 3. Кроп региона
-            val croppedBitmap = Bitmap.createBitmap(
-                originalBitmap,
-                safeRect.left,
-                safeRect.top,
-                safeRect.width(),
-                safeRect.height()
-            )
 
-            originalBitmap.recycle()
-
-            // 4. Tesseract ОЧИСТКА (ВАЖНО)
-            tessApi!!.clear()
-
-            // 5. Передаем изображение
-            tessApi!!.setImage(croppedBitmap)
-
-            // (необязательно, но сильно повышает качество)
-            tessApi!!.setRectangle(0, 0, croppedBitmap.width, croppedBitmap.height)
-
-            // 6. Распознавание
-            val result = tessApi!!.utF8Text ?: ""
-
-            croppedBitmap.recycle()
 
             // 7. Постобработка
             result
@@ -135,8 +147,15 @@ class TesseractOcrServiceImpl(
                 .replace(Regex("\\s+"), " ")
                 .trim()
 
-            println(result)
-            result
+            val confidence = tessApi!!.meanConfidence()
+            //println("${confidence}% $result")
+
+            if (confidence < 30) {
+                //println("TEXT REJECTED (low confidence)")
+                return@withContext ""
+            } else {
+                result
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             ""

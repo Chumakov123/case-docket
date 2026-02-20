@@ -31,6 +31,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.presentation.screens.components.CourtCaseCard
+import com.chumakov123.casedocket.presentation.screens.components.ErrorState
+import com.chumakov123.casedocket.presentation.screens.components.IdleState
+import com.chumakov123.casedocket.presentation.screens.components.LoadingState
+import com.chumakov123.casedocket.presentation.screens.components.ProcessingStatus
+import com.chumakov123.casedocket.presentation.screens.components.ScheduleHeader
 import com.chumakov123.casedocket.presentation.viewmodel.OcrState
 import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
 import org.koin.androidx.compose.koinViewModel

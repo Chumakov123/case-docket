@@ -1,4 +1,4 @@
-package com.chumakov123.casedocket.presentation.screens
+package com.chumakov123.casedocket.presentation.screens.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box

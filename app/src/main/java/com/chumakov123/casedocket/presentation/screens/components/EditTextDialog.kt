@@ -1,4 +1,4 @@
-package com.chumakov123.casedocket.presentation.screens
+package com.chumakov123.casedocket.presentation.screens.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
