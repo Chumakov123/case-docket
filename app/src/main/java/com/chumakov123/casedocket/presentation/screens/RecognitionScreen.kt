@@ -110,7 +110,7 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
 
                 is OcrState.Success -> {
                     item {
-                        ScheduleHeader(schedule = state.schedule)
+                        ScheduleHeader(schedule = state.schedule, onDateChange = { /* TODO onDateChange */ })
                     }
 
                     item {
