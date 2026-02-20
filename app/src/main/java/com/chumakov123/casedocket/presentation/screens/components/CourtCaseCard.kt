@@ -92,6 +92,7 @@ fun CourtCaseCard(courtCaseDraft: CourtCaseDraft) {
         EditTextDialog(
             title = stringResource(R.string.edit_case_number_title),
             initial = caseNumber,
+            multiline = true,
             onDismiss = { editNumber = false },
             onConfirm = {
                 caseNumber = it
