@@ -3,6 +3,8 @@
     <string name="app_name">Judge Assistant</string>
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="confirm">Confirm</string>
     <string name="recognized_cases_title">Recognized cases:</string>
     <string name="new_test_recognition">New test recognition</string>
     <string name="schedule_title">Court Schedule</string>

@@ -3,29 +3,33 @@ package com.chumakov123.casedocket.presentation.screens
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,13 +60,24 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.primary
                 ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            // TODO: реализовать навигацию назад
+                            Log.d("RecognitionScreen", "Navigate back clicked")
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
+                },
                 actions = {
-                    // Кнопка-заглушка настроек (три точки)
                     IconButton(
                         onClick = {
                             // TODO: открыть экран настроек
-                            // Например: context.startActivity(Intent(context, SettingsActivity::class.java))
-                            Log.d("MainScreen", "Settings clicked")
+                            Log.d("RecognitionScreen", "Settings clicked")
                         }
                     ) {
                         Icon(
@@ -72,6 +87,45 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            when (ocrState) {
+                is OcrState.Success -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 4.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        SmallFloatingActionButton(
+                            onClick = { viewModel.resetState() },
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = stringResource(R.string.cancel)
+                            )
+                        }
+
+                        FloatingActionButton(
+                            onClick = {
+                                Log.d("RecognitionScreen", "Confirm recognition clicked")
+                            },
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                }
+                else -> { }
+            }
         }
     ) { paddingValues ->
         LazyColumn(
@@ -126,25 +180,12 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
                     items(state.schedule.cases) { courtCase ->
                         CourtCaseCard(courtCaseDraft = courtCase)
                     }
-
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { viewModel.resetState() },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.RestartAlt, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.new_test_recognition))
-                        }
-                    }
                 }
             }
 
             item {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
 }
-
