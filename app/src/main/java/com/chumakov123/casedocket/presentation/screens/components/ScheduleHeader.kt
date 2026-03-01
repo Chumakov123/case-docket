@@ -39,8 +39,11 @@ import java.time.LocalDate
 @Composable
 fun ScheduleHeader(
     schedule: CourtScheduleDraft,
-    onDateChange: (ScheduleDate) -> Unit
-) {
+    dateError: Boolean,
+    judgeError: Boolean,
+    onDateChange: (ScheduleDate) -> Unit,
+    onJudgeChange: (String) -> Unit
+){
     var judgeText by remember { mutableStateOf(schedule.judge.text) }
     val casesCount = schedule.cases.size
 
@@ -81,16 +84,21 @@ fun ScheduleHeader(
             ScheduleDatePickerField(
                 date = schedule.date,
                 onDateSelected = onDateChange,
+                isError = dateError,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
 
             OutlinedTextField(
                 value = judgeText,
-                onValueChange = { judgeText = it },
+                onValueChange = {
+                    judgeText = it
+                    onJudgeChange(it)
+                },
                 label = { Text(stringResource(R.string.judge_label)) },
                 placeholder = { Text(stringResource(R.string.judge_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 singleLine = true,
+                isError = judgeError,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
@@ -120,6 +128,7 @@ fun ScheduleHeader(
 private fun ScheduleDatePickerField(
     date: ScheduleDate?,
     onDateSelected: (ScheduleDate) -> Unit,
+    isError: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -159,6 +168,7 @@ private fun ScheduleDatePickerField(
                     modifier = Modifier.size(20.dp)
                 )
             },
+            isError = isError,
             onClick = { openPicker() }
         )
     }

@@ -28,6 +28,7 @@ fun EditableTextBlock(
     minLines: Int = 1,
     maxLines: Int = Int.MAX_VALUE,
     leadingIcon: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
     onClick: () -> Unit
 ) {
     val isEmpty = value.isNullOrBlank()
@@ -38,7 +39,11 @@ fun EditableTextBlock(
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
             1.dp,
-            MaterialTheme.colorScheme.outlineVariant
+            if (isError) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            }
         ),
         modifier = modifier.fillMaxWidth()
     ) {

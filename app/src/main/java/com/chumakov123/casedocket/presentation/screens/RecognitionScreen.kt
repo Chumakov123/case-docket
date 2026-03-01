@@ -50,6 +50,8 @@ import org.koin.androidx.compose.koinViewModel
 fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
     val context = LocalContext.current
     val ocrState by viewModel.ocrState.collectAsState()
+    val currentDraft by viewModel.currentDraft.collectAsState()
+    val validation by viewModel.validation.collectAsState()
     val processingTime by viewModel.processingTime.collectAsState()
 
     Scaffold(
@@ -89,42 +91,28 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
             )
         },
         floatingActionButton = {
-            when (ocrState) {
-                is OcrState.Success -> {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(end = 4.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
+            if (ocrState is OcrState.Success) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 4.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    SmallFloatingActionButton(
+                        onClick = { viewModel.resetState() },
+                        containerColor = MaterialTheme.colorScheme.errorContainer
                     ) {
-                        SmallFloatingActionButton(
-                            onClick = { viewModel.resetState() },
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = stringResource(R.string.cancel)
-                            )
-                        }
-
+                        Icon(Icons.Default.Close, contentDescription = "Отмена")
+                    }
+                    if (validation.isValid) {
                         FloatingActionButton(
-                            onClick = {
-                                Log.d("RecognitionScreen", "Confirm recognition clicked")
-                            },
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            onClick = { viewModel.confirmSchedule() },
+                            containerColor = MaterialTheme.colorScheme.primary
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null
-                            )
+                            Icon(Icons.Default.Check, contentDescription = null)
                         }
                     }
                 }
-                else -> { }
             }
         }
     ) { paddingValues ->
@@ -163,22 +151,42 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
                 }
 
                 is OcrState.Success -> {
-                    item {
-                        ScheduleHeader(schedule = state.schedule, onDateChange = { /* TODO onDateChange */ })
-                    }
+                    if (currentDraft != null) {
+                        item {
+                            ScheduleHeader(
+                                schedule = currentDraft!!,
+                                dateError = validation.dateError,
+                                judgeError = validation.judgeError,
+                                onDateChange = { viewModel.updateDate(it) },
+                                onJudgeChange = { viewModel.updateJudge(it) }
+                            )
+                        }
 
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            stringResource(R.string.recognized_cases_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
+                        items(currentDraft!!.cases.indices.toList()) { index ->
+                            CourtCaseCard(
+                                courtCaseDraft = currentDraft!!.cases[index],
+                                validation = validation.casesValidations[index],
+                                onCaseNumberChange = { newNumber ->
+                                    viewModel.updateCaseNumber(index, newNumber)
+                                },
+                                onTimeChange = { newTime ->
+                                    viewModel.updateCaseTime(index, newTime)
+                                },
+                                onDescriptionChange = { newDesc ->
+                                    viewModel.updateCaseDescription(index, newDesc)
+                                }
+                            )
+                        }
 
-                    items(state.schedule.cases) { courtCase ->
-                        CourtCaseCard(courtCaseDraft = courtCase)
+                        if (validation.casesError) {
+                            item {
+                                Text(
+                                    "Список дел пуст",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

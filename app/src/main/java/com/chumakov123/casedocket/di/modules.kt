@@ -12,6 +12,7 @@ import com.chumakov123.casedocket.data.repository.OpenCvLayoutAnalyzerImpl
 import com.chumakov123.casedocket.data.repository.TesseractOcrServiceImpl
 import com.chumakov123.casedocket.domain.document.ScheduleTableParser
 import com.chumakov123.casedocket.domain.repository.ImageSaver
+import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -19,6 +20,7 @@ import org.koin.dsl.module
 val domainModule = module {
     factory { DocumentInterpreter() }
     factory { ScheduleTableParser() }
+    factory { ScheduleValidator() }
 
     factory {
         RecognizeScheduleUseCase(
@@ -32,7 +34,10 @@ val domainModule = module {
 }
 
 val appModule = module {
-    viewModel { OcrViewModel(recognizeScheduleUseCase = get()) }
+    viewModel { OcrViewModel(
+        recognizeScheduleUseCase = get(),
+        scheduleValidator = get(),
+    ) }
 }
 
 val dataModule = module {
