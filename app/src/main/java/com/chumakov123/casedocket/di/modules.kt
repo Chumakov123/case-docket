@@ -92,7 +92,7 @@ val dataModule = module {
             json = get()
         )
     }
-    single<RecognitionTaskRepository> { RecognitionTaskRepositoryImpl(dao = get()) }
+    single<RecognitionTaskRepository> { RecognitionTaskRepositoryImpl(dao = get(), json = get()) }
 }
 
 val appModules = listOf(
