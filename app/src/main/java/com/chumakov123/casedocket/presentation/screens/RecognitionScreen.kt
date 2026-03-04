@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,13 +65,23 @@ import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
+fun RecognitionScreen(
+    taskId: Long? = null,
+    viewModel: OcrViewModel = koinViewModel()
+) {
     val context = LocalContext.current
     val ocrState by viewModel.ocrState.collectAsState()
     val currentDraft by viewModel.currentDraft.collectAsState()
     val validation by viewModel.validation.collectAsState()
     val processingTime by viewModel.processingTime.collectAsState()
     val tasks by viewModel.tasks.collectAsState()
+
+    LaunchedEffect(taskId) {
+        if (taskId != null) {
+            viewModel.setTaskId(taskId)
+            // TODO: загрузить черновик по taskId
+        }
+    }
 
     Scaffold(
         topBar = {

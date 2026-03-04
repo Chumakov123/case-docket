@@ -24,6 +24,7 @@ import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
+import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
 import kotlinx.serialization.json.Json
@@ -58,6 +59,13 @@ val appModule = module {
             imageSaver = get(),
             confirmDraftUseCase = get(),
             rejectDraftUseCase = get()
+        )
+    }
+    viewModel {
+        DraftListViewModel(
+            manager = get(),
+            repository = get(),
+            imageSaver = get()
         )
     }
     factory { ScheduleRecognitionManager(get(), get()) }

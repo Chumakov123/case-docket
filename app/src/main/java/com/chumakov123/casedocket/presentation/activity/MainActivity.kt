@@ -15,7 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import com.chumakov123.casedocket.presentation.screens.RecognitionScreen
+import com.chumakov123.casedocket.presentation.navigation.AppNavHost
 import com.chumakov123.casedocket.presentation.theme.AppTheme
 import com.chumakov123.casedocket.service.RecognitionForegroundService
 
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    RecognitionScreen()
+                    AppNavHost()
                 }
             }
         }
