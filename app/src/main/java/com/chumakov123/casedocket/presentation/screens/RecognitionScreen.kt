@@ -304,12 +304,10 @@ fun TasksSection(tasks: List<RecognitionTask>) {
                     )
                 }
 
-                if (expanded) {
-                    Icon(
-                        imageVector = Icons.Default.ExpandLess,
-                        contentDescription = "Свернуть"
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.ExpandLess,
+                    contentDescription = "Свернуть"
+                )
             }
 
             LinearProgressIndicator(

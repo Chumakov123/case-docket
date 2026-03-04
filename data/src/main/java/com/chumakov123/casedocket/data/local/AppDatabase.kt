@@ -4,17 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.chumakov123.casedocket.data.local.dao.ConfirmedScheduleDao
 import com.chumakov123.casedocket.data.local.dao.RecognitionTaskDao
+import com.chumakov123.casedocket.data.local.entity.ConfirmedScheduleEntity
 import com.chumakov123.casedocket.data.local.entity.RecognitionTaskEntity
 
 @Database(
-    entities = [RecognitionTaskEntity::class],
-    version = 1,
+    entities = [RecognitionTaskEntity::class, ConfirmedScheduleEntity::class],
+    version = 2,
     exportSchema = false
 )
-
 abstract class AppDatabase : RoomDatabase() {
     abstract fun recognitionTaskDao(): RecognitionTaskDao
+    abstract fun confirmedScheduleDao(): ConfirmedScheduleDao
 
     companion object {
         fun getInstance(context: Context): AppDatabase {
@@ -22,7 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "app_database"
-            ).build()
+            )
+                .fallbackToDestructiveMigration(false)
+                .build()
         }
     }
 }

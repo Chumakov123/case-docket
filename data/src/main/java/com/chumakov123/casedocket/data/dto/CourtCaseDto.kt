@@ -1,0 +1,10 @@
+package com.chumakov123.casedocket.data.dto
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class CourtCaseDto(
+    val caseNumber: String,
+    val time: CaseTimeDto,
+    val description: CourtCaseDescriptionDto
+)
