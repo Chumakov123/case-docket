@@ -18,6 +18,7 @@ import com.chumakov123.casedocket.domain.service.RecognitionServiceController
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
+import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
 import org.koin.android.ext.koin.androidContext
@@ -51,6 +52,7 @@ val appModule = module {
     }
     factory { ScheduleRecognitionManager(get(), get()) }
     single<RecognitionServiceController> { RecognitionServiceControllerImpl(androidContext()) }
+    single { AppForegroundTracker() }
 }
 
 val dataModule = module {

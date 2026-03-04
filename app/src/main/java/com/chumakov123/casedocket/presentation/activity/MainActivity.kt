@@ -1,6 +1,7 @@
 package com.chumakov123.casedocket.presentation.activity
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import com.chumakov123.casedocket.presentation.screens.RecognitionScreen
 import com.chumakov123.casedocket.presentation.theme.AppTheme
+import com.chumakov123.casedocket.service.RecognitionForegroundService
 
 class MainActivity : ComponentActivity() {
 
@@ -53,5 +55,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.cancel(RecognitionForegroundService.COMPLETION_NOTIFICATION_ID)
     }
 }
