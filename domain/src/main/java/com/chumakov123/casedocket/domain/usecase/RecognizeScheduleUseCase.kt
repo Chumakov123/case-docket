@@ -2,11 +2,11 @@ package com.chumakov123.casedocket.domain.usecase
 
 import com.chumakov123.casedocket.domain.document.DocumentInterpreter
 import com.chumakov123.casedocket.domain.document.ScheduleTableParser
-import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
-import com.chumakov123.casedocket.domain.repository.OcrService
-import com.chumakov123.casedocket.domain.model.imaging.TableRowText
 import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
+import com.chumakov123.casedocket.domain.model.imaging.TableRowText
+import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
 import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
+import com.chumakov123.casedocket.domain.repository.OcrService
 
 class RecognizeScheduleUseCase(
     private val analyzer: ImageLayoutAnalyzer,

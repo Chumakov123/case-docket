@@ -2,9 +2,16 @@ package com.chumakov123.casedocket.data.repository
 
 import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
 import com.chumakov123.casedocket.domain.repository.ImageSaver
-import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
+import org.opencv.core.Core
+import org.opencv.core.Mat
+import org.opencv.core.MatOfByte
+import org.opencv.core.MatOfPoint
+import org.opencv.core.MatOfPoint2f
+import org.opencv.core.Point
+import org.opencv.core.Rect
+import org.opencv.core.Size
 import org.opencv.imgcodecs.Imgcodecs
+import org.opencv.imgproc.Imgproc
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -93,7 +100,13 @@ class OpenCvImagePreprocessorImpl(
 
         val contours = mutableListOf<MatOfPoint>()
         val hierarchy = Mat()
-        Imgproc.findContours(closed, contours, hierarchy, Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        Imgproc.findContours(
+            closed,
+            contours,
+            hierarchy,
+            Imgproc.RETR_EXTERNAL,
+            Imgproc.CHAIN_APPROX_SIMPLE
+        )
 
         if (contours.isEmpty()) return null
 

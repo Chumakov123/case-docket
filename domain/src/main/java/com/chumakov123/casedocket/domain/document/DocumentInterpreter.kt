@@ -1,13 +1,12 @@
 package com.chumakov123.casedocket.domain.document
 
-import com.chumakov123.casedocket.domain.model.imaging.TableRowText
-import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
+import com.chumakov123.casedocket.domain.model.court.CaseTime
 import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 import com.chumakov123.casedocket.domain.model.court.Judge
-import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.model.court.ScheduleDate
-import com.chumakov123.casedocket.domain.model.court.CaseTime
-import kotlin.collections.map
+import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
+import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
+import com.chumakov123.casedocket.domain.model.imaging.TableRowText
 
 class DocumentInterpreter {
 
@@ -30,16 +29,19 @@ class DocumentInterpreter {
                         time = time,
                         description = description
                     )
+
                     time != null -> CourtCaseDraft(
                         caseNumber = caseNumber,
                         time = time,
                         description = description
                     )
+
                     description.text.isNotBlank() -> CourtCaseDraft(
                         caseNumber = caseNumber,
                         time = time,
                         description = description
                     )
+
                     else -> null
                 }
             }

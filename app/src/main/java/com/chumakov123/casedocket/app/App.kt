@@ -10,11 +10,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        if (!OpenCVLoader.initLocal()) {
-            // Обработка ошибки инициализации OpenCV
-        } else {
-            // OpenCV успешно инициализирован
-        }
+        OpenCVLoader.initLocal()
 
         startKoin {
             androidContext(this@App)

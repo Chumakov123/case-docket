@@ -2,6 +2,7 @@ package com.chumakov123.casedocket.presentation.screens
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -29,12 +33,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.domain.model.RecognitionTask
+import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.screens.components.CourtCaseCard
 import com.chumakov123.casedocket.presentation.screens.components.ErrorState
 import com.chumakov123.casedocket.presentation.screens.components.IdleState
@@ -44,6 +49,9 @@ import com.chumakov123.casedocket.presentation.screens.components.ScheduleHeader
 import com.chumakov123.casedocket.presentation.viewmodel.OcrState
 import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
 import org.koin.androidx.compose.koinViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +61,7 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
     val currentDraft by viewModel.currentDraft.collectAsState()
     val validation by viewModel.validation.collectAsState()
     val processingTime by viewModel.processingTime.collectAsState()
+    val tasks by viewModel.tasks.collectAsState()
 
     Scaffold(
         topBar = {
@@ -128,6 +137,31 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
                 ProcessingStatus(ocrState, processingTime)
             }
 
+            item {
+                Button(
+                    onClick = { viewModel.submitTestImage(context, "test_schedule.jpg") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Добавить тестовое изображение в очередь")
+                }
+            }
+
+            if (tasks.isNotEmpty()) {
+                item {
+                    Text(
+                        "Очередь задач",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+                items(tasks) { task ->
+                    TaskItem(task)
+                }
+            }
+
+            item {
+                ProcessingStatus(ocrState, processingTime)
+            }
+
             when (val state = ocrState) {
                 is OcrState.Idle -> {
                     item {
@@ -196,4 +230,43 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
             }
         }
     }
+}
+
+@Composable
+fun TaskItem(task: RecognitionTask) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = when (task.status) {
+                TaskStatus.PENDING -> MaterialTheme.colorScheme.secondaryContainer
+                TaskStatus.PROCESSING -> MaterialTheme.colorScheme.tertiaryContainer
+                TaskStatus.COMPLETED -> MaterialTheme.colorScheme.primaryContainer
+                TaskStatus.FAILED -> MaterialTheme.colorScheme.errorContainer
+            }
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text("ID: ${task.id}")
+                Text("Статус: ${task.status.name}")
+                Text("Создана: ${formatDate(task.createdAt)}")
+                if (task.errorMessage != null) {
+                    Text("Ошибка: ${task.errorMessage}", color = MaterialTheme.colorScheme.error)
+                }
+            }
+            if (task.status == TaskStatus.COMPLETED) {
+                Icon(Icons.Default.Check, contentDescription = null)
+            }
+        }
+    }
+}
+
+fun formatDate(date: Date): String {
+    val format = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+    return format.format(date)
 }

@@ -3,7 +3,7 @@ package com.chumakov123.casedocket.presentation.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.chumakov123.casedocket.domain.model.court.CaseTime
+import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
@@ -13,6 +13,8 @@ import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
 import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.model.court.toCaseTimeOrNull
 import com.chumakov123.casedocket.domain.model.validation.DraftValidation
+import com.chumakov123.casedocket.domain.repository.ImageSaver
+import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +34,8 @@ sealed class OcrState {
 class OcrViewModel(
     private val recognizeScheduleUseCase: RecognizeScheduleUseCase,
     private val scheduleValidator: ScheduleValidator,
+    private val manager: ScheduleRecognitionManager,
+    private val imageSaver: ImageSaver
 ) : ViewModel() {
 
     // Черновик расписания
@@ -58,13 +62,34 @@ class OcrViewModel(
     private val _processingTime = MutableStateFlow(0L)
     val processingTime: StateFlow<Long> = _processingTime
 
+    private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
+    val tasks: StateFlow<List<RecognitionTask>> = _tasks
+
     init {
+        viewModelScope.launch {
+            manager.observeTasks().collect { tasks ->
+                _tasks.value = tasks
+            }
+        }
         // При каждом изменении черновика пересчитываем валидацию
         viewModelScope.launch {
             _currentDraft.collect { draft ->
                 if (draft != null) {
                     _validation.value = scheduleValidator.validate(draft)
                 }
+            }
+        }
+    }
+
+    fun submitTestImage(context: Context, filename: String) {
+        viewModelScope.launch {
+            val bytes = loadImageBytesFromAssets(context, filename) ?: return@launch
+            val path = imageSaver.save(bytes, filename)
+            if (path != null) {
+                val uri = "file://$path"
+                manager.submitImage(uri)
+            } else {
+                _ocrState.value = OcrState.Error("Не удалось сохранить изображение")
             }
         }
     }
@@ -151,7 +176,7 @@ class OcrViewModel(
         val draft = _currentDraft.value ?: return
         if (!_validation.value.isValid) return
 
-        val schedule = draft.toCourtSchedule() // extension функция, см. ниже
+        draft.toCourtSchedule() // extension функция, см. ниже
         viewModelScope.launch {
             //confirmScheduleUseCase(schedule)
             // например, переход на другой экран
@@ -159,9 +184,14 @@ class OcrViewModel(
     }
 
     // Вспомогательная функция для загрузки из assets (без изменений)
-    private suspend fun loadImageBytesFromAssets(context: Context, filename: String): ByteArray? = withContext(Dispatchers.IO) {
-        try { context.assets.open(filename).use { it.readBytes() } } catch (e: Exception) { null }
-    }
+    private suspend fun loadImageBytesFromAssets(context: Context, filename: String): ByteArray? =
+        withContext(Dispatchers.IO) {
+            try {
+                context.assets.open(filename).use { it.readBytes() }
+            } catch (e: Exception) {
+                null
+            }
+        }
 
     fun resetState() {
         _ocrState.value = OcrState.Idle
