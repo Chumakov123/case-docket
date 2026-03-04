@@ -16,7 +16,7 @@ class RecognizeScheduleUseCase(
     private val tableParser: ScheduleTableParser
 ) {
 
-    suspend fun execute(image: ByteArray): CourtScheduleDraft {
+    suspend operator fun invoke(image: ByteArray): CourtScheduleDraft {
         val processedImage = preprocessor.preprocess(image)
 
         val layout = analyzer.analyze(processedImage)

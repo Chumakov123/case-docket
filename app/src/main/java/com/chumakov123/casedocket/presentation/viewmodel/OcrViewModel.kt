@@ -15,7 +15,9 @@ import com.chumakov123.casedocket.domain.model.court.toCaseTimeOrNull
 import com.chumakov123.casedocket.domain.model.validation.DraftValidation
 import com.chumakov123.casedocket.domain.repository.ImageSaver
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
+import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,14 +37,14 @@ class OcrViewModel(
     private val recognizeScheduleUseCase: RecognizeScheduleUseCase,
     private val scheduleValidator: ScheduleValidator,
     private val manager: ScheduleRecognitionManager,
-    private val imageSaver: ImageSaver
+    private val imageSaver: ImageSaver,
+    private val confirmDraftUseCase: ConfirmDraftUseCase,
+    private val rejectDraftUseCase: RejectDraftUseCase
 ) : ViewModel() {
 
-    // Черновик расписания
     private val _currentDraft = MutableStateFlow<CourtScheduleDraft?>(null)
     val currentDraft: StateFlow<CourtScheduleDraft?> = _currentDraft
 
-    // Результат валидации
     private val _validation = MutableStateFlow(
         DraftValidation(
             isValid = false,
@@ -54,16 +56,17 @@ class OcrViewModel(
     )
     val validation: StateFlow<DraftValidation> = _validation
 
-    // Состояние процесса распознавания
     private val _ocrState = MutableStateFlow<OcrState>(OcrState.Idle)
     val ocrState: StateFlow<OcrState> = _ocrState
 
-    // Время обработки
     private val _processingTime = MutableStateFlow(0L)
     val processingTime: StateFlow<Long> = _processingTime
 
     private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
     val tasks: StateFlow<List<RecognitionTask>> = _tasks
+
+    private val _taskId = MutableStateFlow<Long?>(null)
+    val taskId: StateFlow<Long?> = _taskId
 
     init {
         viewModelScope.launch {
@@ -71,7 +74,6 @@ class OcrViewModel(
                 _tasks.value = tasks
             }
         }
-        // При каждом изменении черновика пересчитываем валидацию
         viewModelScope.launch {
             _currentDraft.collect { draft ->
                 if (draft != null) {
@@ -79,6 +81,10 @@ class OcrViewModel(
                 }
             }
         }
+    }
+
+    fun setTaskId(id: Long) {
+        _taskId.value = id
     }
 
     fun submitTestImage(context: Context, filename: String) {
@@ -94,7 +100,6 @@ class OcrViewModel(
         }
     }
 
-    // Распознавание изображения (адаптировано)
     fun recognizeScheduleFromAssets(context: Context, filename: String) {
         viewModelScope.launch {
             _ocrState.value = OcrState.Loading
@@ -115,7 +120,7 @@ class OcrViewModel(
     private suspend fun recognizeSchedule(imageBytes: ByteArray) {
         try {
             val schedule = withContext(Dispatchers.IO) {
-                recognizeScheduleUseCase.execute(imageBytes)
+                recognizeScheduleUseCase(imageBytes)
             }
             _currentDraft.value = schedule
             _ocrState.value = OcrState.Success
@@ -124,7 +129,6 @@ class OcrViewModel(
         }
     }
 
-    // Методы редактирования
     fun updateJudge(text: String) {
         _currentDraft.update { draft ->
             draft?.copy(judge = Judge(text))
@@ -171,19 +175,41 @@ class OcrViewModel(
         }
     }
 
-    // Подтверждение расписания (конвертация и вызов use case)
     fun confirmSchedule() {
         val draft = _currentDraft.value ?: return
+        val taskId = _taskId.value ?: return
         if (!_validation.value.isValid) return
 
-        draft.toCourtSchedule() // extension функция, см. ниже
+        val confirmedSchedule = draft.toCourtSchedule() // extension из нижней части файла
         viewModelScope.launch {
-            //confirmScheduleUseCase(schedule)
-            // например, переход на другой экран
+            try {
+                confirmDraftUseCase(taskId, confirmedSchedule)
+                resetState()
+            } catch (e: Exception) {
+                _ocrState.value = OcrState.Error("Ошибка подтверждения: ${e.message}")
+            }
         }
     }
 
-    // Вспомогательная функция для загрузки из assets (без изменений)
+    fun rejectDraft() {
+        val taskId = _taskId.value ?: return
+        viewModelScope.launch {
+            try {
+                rejectDraftUseCase(taskId)
+                resetState()
+            } catch (e: Exception) {
+                _ocrState.value = OcrState.Error("Ошибка отклонения: ${e.message}")
+            }
+        }
+    }
+
+    fun resetState() {
+        _ocrState.value = OcrState.Idle
+        _processingTime.value = 0
+        _currentDraft.value = null
+        _taskId.value = null
+    }
+
     private suspend fun loadImageBytesFromAssets(context: Context, filename: String): ByteArray? =
         withContext(Dispatchers.IO) {
             try {
@@ -192,12 +218,6 @@ class OcrViewModel(
                 null
             }
         }
-
-    fun resetState() {
-        _ocrState.value = OcrState.Idle
-        _processingTime.value = 0
-        _currentDraft.value = null
-    }
 }
 
 // Extension для конвертации валидного черновика в финальную модель

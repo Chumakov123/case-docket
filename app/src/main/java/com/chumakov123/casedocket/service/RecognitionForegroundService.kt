@@ -99,7 +99,7 @@ class RecognitionForegroundService : LifecycleService() {
         try {
             val imageBytes = loadImageBytes(task.imageUri)
             val result = withTimeout(120_000) {
-                recognizeUseCase.execute(imageBytes)
+                recognizeUseCase(imageBytes)
             }
             val dto = result.toDto()
             val json = Json.Default.encodeToString(CourtScheduleDraftDto.serializer(), dto)

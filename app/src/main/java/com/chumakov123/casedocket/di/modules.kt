@@ -19,7 +19,9 @@ import com.chumakov123.casedocket.domain.repository.OcrService
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.service.RecognitionServiceController
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
+import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
@@ -33,6 +35,8 @@ val domainModule = module {
     factory { DocumentInterpreter() }
     factory { ScheduleTableParser() }
     factory { ScheduleValidator() }
+    factory { ConfirmDraftUseCase(taskRepository = get(), confirmedRepository = get()) }
+    factory { RejectDraftUseCase(taskRepository = get()) }
 
     factory {
         RecognizeScheduleUseCase(
@@ -51,7 +55,9 @@ val appModule = module {
             recognizeScheduleUseCase = get(),
             scheduleValidator = get(),
             manager = get(),
-            imageSaver = get()
+            imageSaver = get(),
+            confirmDraftUseCase = get(),
+            rejectDraftUseCase = get()
         )
     }
     factory { ScheduleRecognitionManager(get(), get()) }
