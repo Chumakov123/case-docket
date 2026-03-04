@@ -1,6 +1,8 @@
 package com.chumakov123.casedocket.presentation.screens
 
 import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -24,7 +27,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
@@ -33,6 +38,10 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -148,13 +157,7 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
 
             if (tasks.isNotEmpty()) {
                 item {
-                    Text(
-                        "Очередь задач",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-                items(tasks) { task ->
-                    TaskItem(task)
+                    TasksSection(tasks = tasks)
                 }
             }
 
@@ -233,9 +236,9 @@ fun RecognitionScreen(viewModel: OcrViewModel = koinViewModel()) {
 }
 
 @Composable
-fun TaskItem(task: RecognitionTask) {
+fun TaskItem(task: RecognitionTask, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = when (task.status) {
                 TaskStatus.PENDING -> MaterialTheme.colorScheme.secondaryContainer
@@ -261,6 +264,72 @@ fun TaskItem(task: RecognitionTask) {
             }
             if (task.status == TaskStatus.COMPLETED) {
                 Icon(Icons.Default.Check, contentDescription = null)
+            }
+        }
+    }
+}
+
+@Composable
+fun TasksSection(tasks: List<RecognitionTask>) {
+    var expanded by remember { mutableStateOf(true) }
+
+    val totalCount = tasks.size
+    val completedCount = tasks.count { it.status == TaskStatus.COMPLETED }
+    val progress = if (totalCount > 0) completedCount.toFloat() / totalCount else 0f
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(
+            modifier = Modifier.animateContentSize()
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Очередь задач",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = "$completedCount из $totalCount выполнено",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                if (expanded) {
+                    Icon(
+                        imageVector = Icons.Default.ExpandLess,
+                        contentDescription = "Свернуть"
+                    )
+                }
+            }
+
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(4.dp),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                strokeCap = ProgressIndicatorDefaults.LinearStrokeCap,
+            )
+
+            if (expanded) {
+                tasks.forEach { task ->
+                    TaskItem(
+                        task = task,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
             }
         }
     }
