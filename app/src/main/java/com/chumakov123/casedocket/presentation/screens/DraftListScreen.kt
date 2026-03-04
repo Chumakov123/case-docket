@@ -37,6 +37,8 @@ import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import org.koin.androidx.compose.koinViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -217,4 +219,9 @@ fun FailedTaskItem(task: RecognitionTask, onRetryClick: () -> Unit, onDeleteClic
             }
         }
     }
+}
+
+private fun formatDate(date: java.util.Date): String {
+    val format = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+    return format.format(date)
 }

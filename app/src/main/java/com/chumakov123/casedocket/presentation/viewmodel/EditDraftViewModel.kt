@@ -1,9 +1,7 @@
 package com.chumakov123.casedocket.presentation.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
@@ -13,34 +11,35 @@ import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
 import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.model.court.toCaseTimeOrNull
 import com.chumakov123.casedocket.domain.model.validation.DraftValidation
-import com.chumakov123.casedocket.domain.repository.ImageSaver
-import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
-import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-sealed class OcrState {
-    object Idle : OcrState()
-    object Loading : OcrState()
-    object Success : OcrState()
-    data class Error(val message: String) : OcrState()
+sealed class EditDraftState {
+    object Idle : EditDraftState()
+    object Loading : EditDraftState()
+    object Success : EditDraftState()
+    data class Error(val message: String) : EditDraftState()
 }
 
-class OcrViewModel(
-    private val recognizeScheduleUseCase: RecognizeScheduleUseCase,
-    private val scheduleValidator: ScheduleValidator,
-    private val manager: ScheduleRecognitionManager,
-    private val imageSaver: ImageSaver,
+class EditDraftViewModel(
+    private val getDraftByIdUseCase: GetDraftByIdUseCase,
+    private val updateDraftUseCase: UpdateDraftUseCase,
     private val confirmDraftUseCase: ConfirmDraftUseCase,
-    private val rejectDraftUseCase: RejectDraftUseCase
+    private val rejectDraftUseCase: RejectDraftUseCase,
+    private val scheduleValidator: ScheduleValidator,
 ) : ViewModel() {
+
+    private val _taskId = MutableStateFlow<Long?>(null)
 
     private val _currentDraft = MutableStateFlow<CourtScheduleDraft?>(null)
     val currentDraft: StateFlow<CourtScheduleDraft?> = _currentDraft
@@ -56,28 +55,17 @@ class OcrViewModel(
     )
     val validation: StateFlow<DraftValidation> = _validation
 
-    private val _ocrState = MutableStateFlow<OcrState>(OcrState.Idle)
-    val ocrState: StateFlow<OcrState> = _ocrState
+    private val _state = MutableStateFlow<EditDraftState>(EditDraftState.Idle)
+    val state: StateFlow<EditDraftState> = _state
 
-    private val _processingTime = MutableStateFlow(0L)
-    val processingTime: StateFlow<Long> = _processingTime
-
-    private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
-    val tasks: StateFlow<List<RecognitionTask>> = _tasks
-
-    private val _taskId = MutableStateFlow<Long?>(null)
-    val taskId: StateFlow<Long?> = _taskId
+    private var autoSaveJob: Job? = null
 
     init {
         viewModelScope.launch {
-            manager.observeTasks().collect { tasks ->
-                _tasks.value = tasks
-            }
-        }
-        viewModelScope.launch {
-            _currentDraft.collect { draft ->
+            _currentDraft.collectLatest { draft ->
                 if (draft != null) {
                     _validation.value = scheduleValidator.validate(draft)
+                    scheduleAutoSave(draft)
                 }
             }
         }
@@ -85,47 +73,36 @@ class OcrViewModel(
 
     fun setTaskId(id: Long) {
         _taskId.value = id
+        loadDraft(id)
     }
 
-    fun submitTestImage(context: Context, filename: String) {
+    private fun loadDraft(id: Long) {
         viewModelScope.launch {
-            val bytes = loadImageBytesFromAssets(context, filename) ?: return@launch
-            val path = imageSaver.save(bytes, filename)
-            if (path != null) {
-                val uri = "file://$path"
-                manager.submitImage(uri)
-            } else {
-                _ocrState.value = OcrState.Error("Не удалось сохранить изображение")
-            }
-        }
-    }
-
-    fun recognizeScheduleFromAssets(context: Context, filename: String) {
-        viewModelScope.launch {
-            _ocrState.value = OcrState.Loading
-            val startTime = System.currentTimeMillis()
+            _state.value = EditDraftState.Loading
             try {
-                val imageBytes = loadImageBytesFromAssets(context, filename)
-                if (imageBytes != null) {
-                    recognizeSchedule(imageBytes)
+                val draft = getDraftByIdUseCase(id)
+                if (draft != null) {
+                    _currentDraft.value = draft
+                    _state.value = EditDraftState.Success
                 } else {
-                    _ocrState.value = OcrState.Error("Файл не найден")
+                    _state.value = EditDraftState.Error("Черновик не найден")
                 }
-            } finally {
-                _processingTime.value = System.currentTimeMillis() - startTime
+            } catch (e: Exception) {
+                _state.value = EditDraftState.Error("Ошибка загрузки: ${e.message}")
             }
         }
     }
 
-    private suspend fun recognizeSchedule(imageBytes: ByteArray) {
-        try {
-            val schedule = withContext(Dispatchers.IO) {
-                recognizeScheduleUseCase(imageBytes)
+    private fun scheduleAutoSave(draft: CourtScheduleDraft) {
+        autoSaveJob?.cancel()
+        autoSaveJob = viewModelScope.launch {
+            delay(500)
+            val id = _taskId.value ?: return@launch
+            try {
+                updateDraftUseCase(id, draft)
+            } catch (e: Exception) {
+
             }
-            _currentDraft.value = schedule
-            _ocrState.value = OcrState.Success
-        } catch (e: Exception) {
-            _ocrState.value = OcrState.Error("Ошибка распознавания: ${e.message}")
         }
     }
 
@@ -175,52 +152,35 @@ class OcrViewModel(
         }
     }
 
-    fun confirmSchedule() {
+    fun confirmDraft(onComplete: () -> Unit) {
         val draft = _currentDraft.value ?: return
-        val taskId = _taskId.value ?: return
+        val id = _taskId.value ?: return
         if (!_validation.value.isValid) return
 
-        val confirmedSchedule = draft.toCourtSchedule() // extension из нижней части файла
         viewModelScope.launch {
             try {
-                confirmDraftUseCase(taskId, confirmedSchedule)
-                resetState()
+                val confirmedSchedule = draft.toCourtSchedule()
+                confirmDraftUseCase(id, confirmedSchedule)
+                onComplete()
             } catch (e: Exception) {
-                _ocrState.value = OcrState.Error("Ошибка подтверждения: ${e.message}")
+                _state.value = EditDraftState.Error("Ошибка подтверждения: ${e.message}")
             }
         }
     }
 
-    fun rejectDraft() {
-        val taskId = _taskId.value ?: return
+    fun rejectDraft(onComplete: () -> Unit) {
+        val id = _taskId.value ?: return
         viewModelScope.launch {
             try {
-                rejectDraftUseCase(taskId)
-                resetState()
+                rejectDraftUseCase(id)
+                onComplete()
             } catch (e: Exception) {
-                _ocrState.value = OcrState.Error("Ошибка отклонения: ${e.message}")
+                _state.value = EditDraftState.Error("Ошибка отклонения: ${e.message}")
             }
         }
     }
-
-    fun resetState() {
-        _ocrState.value = OcrState.Idle
-        _processingTime.value = 0
-        _currentDraft.value = null
-        _taskId.value = null
-    }
-
-    private suspend fun loadImageBytesFromAssets(context: Context, filename: String): ByteArray? =
-        withContext(Dispatchers.IO) {
-            try {
-                context.assets.open(filename).use { it.readBytes() }
-            } catch (e: Exception) {
-                null
-            }
-        }
 }
 
-// Extension для конвертации валидного черновика в финальную модель
 fun CourtScheduleDraft.toCourtSchedule(): CourtSchedule = CourtSchedule(
     date = requireNotNull(date) { "Date must not be null" },
     judge = judge,

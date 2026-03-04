@@ -7,7 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.chumakov123.casedocket.presentation.screens.DraftListScreen
-import com.chumakov123.casedocket.presentation.screens.RecognitionScreen
+import com.chumakov123.casedocket.presentation.screens.EditDraftScreen
 
 @Composable
 fun AppNavHost() {
@@ -28,7 +28,10 @@ fun AppNavHost() {
             arguments = listOf(navArgument("taskId") { type = NavType.LongType })
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getLong("taskId") ?: return@composable
-            RecognitionScreen(taskId = taskId)
+            EditDraftScreen(
+                taskId = taskId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

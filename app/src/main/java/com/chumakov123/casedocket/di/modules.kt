@@ -27,7 +27,7 @@ import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
-import com.chumakov123.casedocket.presentation.viewmodel.OcrViewModel
+import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
@@ -56,13 +56,12 @@ val domainModule = module {
 
 val appModule = module {
     viewModel {
-        OcrViewModel(
-            recognizeScheduleUseCase = get(),
-            scheduleValidator = get(),
-            manager = get(),
-            imageSaver = get(),
+        EditDraftViewModel(
+            getDraftByIdUseCase = get(),
+            updateDraftUseCase = get(),
             confirmDraftUseCase = get(),
-            rejectDraftUseCase = get()
+            rejectDraftUseCase = get(),
+            scheduleValidator = get(),
         )
     }
     viewModel {
