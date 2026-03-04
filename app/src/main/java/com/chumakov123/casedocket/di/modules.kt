@@ -26,6 +26,7 @@ import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
+import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
@@ -71,6 +72,8 @@ val appModule = module {
             imageSaver = get()
         )
     }
+    viewModel { ConfirmedListViewModel(confirmedRepository = get()) }
+    
     factory { ScheduleRecognitionManager(get(), get()) }
     single<RecognitionServiceController> { RecognitionServiceControllerImpl(androidContext()) }
     single { AppForegroundTracker() }

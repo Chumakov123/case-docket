@@ -19,8 +19,8 @@ class ConfirmedScheduleRepositoryImpl(
         return dao.insert(entity)
     }
 
-    override suspend fun updateSchedule(id: Long, schedule: CourtSchedule) {
-        val entity = schedule.toConfirmedScheduleEntity(json, id)
+    override suspend fun updateSchedule(schedule: CourtSchedule) {
+        val entity = schedule.toConfirmedScheduleEntity(json)
         dao.update(entity)
     }
 

@@ -6,20 +6,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.chumakov123.casedocket.presentation.screens.DraftListScreen
 import com.chumakov123.casedocket.presentation.screens.EditDraftScreen
+import com.chumakov123.casedocket.presentation.screens.MainScreen
 
 @Composable
 fun AppNavHost() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "draft_list"
+        startDestination = "main"
     ) {
-        composable("draft_list") {
-            DraftListScreen(
-                onNavigateToEdit = { taskId ->
+        composable("main") {
+            MainScreen(
+                onNavigateToEditDraft = { taskId ->
                     navController.navigate("edit_draft/$taskId")
+                },
+                onNavigateToEditConfirmed = { confirmedId ->
+                    // navController.navigate("edit_confirmed/$confirmedId")
                 }
             )
         }

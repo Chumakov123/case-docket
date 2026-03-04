@@ -7,11 +7,11 @@ import com.chumakov123.casedocket.domain.model.court.Judge
 import com.chumakov123.casedocket.domain.model.court.ScheduleDate
 import kotlinx.serialization.json.Json
 
-fun CourtSchedule.toConfirmedScheduleEntity(json: Json, id: Long = 0): ConfirmedScheduleEntity {
+fun CourtSchedule.toConfirmedScheduleEntity(json: Json): ConfirmedScheduleEntity {
     val casesDto = this.cases.map { it.toDto() }
     val casesJson = json.encodeToString<List<CourtCaseDto>>(casesDto)
     return ConfirmedScheduleEntity(
-        id = id,
+        id = this.id,
         date = this.date.toDisplayFormat(),
         judge = this.judge.text,
         casesJson = casesJson,

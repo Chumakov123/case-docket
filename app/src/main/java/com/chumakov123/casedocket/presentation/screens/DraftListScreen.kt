@@ -44,12 +44,14 @@ import java.util.Locale
 @Composable
 fun DraftListScreen(
     onNavigateToEdit: (Long) -> Unit,
+    modifier: Modifier = Modifier,
     viewModel: DraftListViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
     val taskGroups by viewModel.taskGroups.collectAsState()
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = { Text("Черновики") }

@@ -31,4 +31,6 @@
     <string name="error_default_message">Не удалось распознать расписание</string>
     <string name="retry_button">Повторить попытку</string>
     <string name="settings">Настройки</string>
+    <string name="drafts">Черновики</string>
+    <string name="confirmed">Подтверждённые</string>
 </resources>
