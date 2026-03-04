@@ -20,8 +20,10 @@ import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.service.RecognitionServiceController
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
@@ -38,6 +40,8 @@ val domainModule = module {
     factory { ScheduleValidator() }
     factory { ConfirmDraftUseCase(taskRepository = get(), confirmedRepository = get()) }
     factory { RejectDraftUseCase(taskRepository = get()) }
+    factory { GetDraftByIdUseCase(repository = get()) }
+    factory { UpdateDraftUseCase(repository = get()) }
 
     factory {
         RecognizeScheduleUseCase(
