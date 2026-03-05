@@ -10,11 +10,14 @@ import com.chumakov123.casedocket.domain.model.court.ScheduleDate
 import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
 import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.model.court.toCaseTimeOrNull
+import com.chumakov123.casedocket.domain.model.court.toDraft
 import com.chumakov123.casedocket.domain.model.validation.DraftValidation
-import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
-import com.chumakov123.casedocket.domain.usecase.GetDraftByIdUseCase
-import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
-import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.ConfirmDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,15 +34,23 @@ sealed class EditDraftState {
     data class Error(val message: String) : EditDraftState()
 }
 
+sealed class EditMode {
+    data class Draft(val taskId: Long) : EditMode()
+    data class Confirmed(val scheduleId: Long) : EditMode()
+}
+
 class EditDraftViewModel(
     private val getDraftByIdUseCase: GetDraftByIdUseCase,
     private val updateDraftUseCase: UpdateDraftUseCase,
     private val confirmDraftUseCase: ConfirmDraftUseCase,
     private val rejectDraftUseCase: RejectDraftUseCase,
+    private val getConfirmedScheduleUseCase: GetConfirmedScheduleByIdUseCase,
+    private val updateConfirmedScheduleUseCase: UpdateConfirmedScheduleUseCase,
     private val scheduleValidator: ScheduleValidator,
 ) : ViewModel() {
 
-    private val _taskId = MutableStateFlow<Long?>(null)
+    private val _mode = MutableStateFlow<EditMode?>(null)
+    val mode: StateFlow<EditMode?> = _mode
 
     private val _currentDraft = MutableStateFlow<CourtScheduleDraft?>(null)
     val currentDraft: StateFlow<CourtScheduleDraft?> = _currentDraft
@@ -71,16 +82,19 @@ class EditDraftViewModel(
         }
     }
 
-    fun setTaskId(id: Long) {
-        _taskId.value = id
-        loadDraft(id)
+    fun setMode(mode: EditMode) {
+        _mode.value = mode
+        when (mode) {
+            is EditMode.Draft -> loadDraft(mode.taskId)
+            is EditMode.Confirmed -> loadConfirmed(mode.scheduleId)
+        }
     }
 
-    private fun loadDraft(id: Long) {
+    private fun loadDraft(taskId: Long) {
         viewModelScope.launch {
             _state.value = EditDraftState.Loading
             try {
-                val draft = getDraftByIdUseCase(id)
+                val draft = getDraftByIdUseCase(taskId)
                 if (draft != null) {
                     _currentDraft.value = draft
                     _state.value = EditDraftState.Success
@@ -93,11 +107,29 @@ class EditDraftViewModel(
         }
     }
 
+    private fun loadConfirmed(scheduleId: Long) {
+        viewModelScope.launch {
+            _state.value = EditDraftState.Loading
+            try {
+                val schedule = getConfirmedScheduleUseCase(scheduleId)
+                if (schedule != null) {
+                    _currentDraft.value = schedule.toDraft()
+                    _state.value = EditDraftState.Success
+                } else {
+                    _state.value = EditDraftState.Error("Расписание не найдено")
+                }
+            } catch (e: Exception) {
+                _state.value = EditDraftState.Error("Ошибка загрузки: ${e.message}")
+            }
+        }
+    }
+
     private fun scheduleAutoSave(draft: CourtScheduleDraft) {
+        if (_mode.value !is EditMode.Draft) return
         autoSaveJob?.cancel()
         autoSaveJob = viewModelScope.launch {
             delay(500)
-            val id = _taskId.value ?: return@launch
+            val id = (_mode.value as? EditMode.Draft)?.taskId ?: return@launch
             try {
                 updateDraftUseCase(id, draft)
             } catch (e: Exception) {
@@ -154,13 +186,13 @@ class EditDraftViewModel(
 
     fun confirmDraft(onComplete: () -> Unit) {
         val draft = _currentDraft.value ?: return
-        val id = _taskId.value ?: return
+        val mode = _mode.value as? EditMode.Draft ?: return
         if (!_validation.value.isValid) return
 
         viewModelScope.launch {
             try {
-                val confirmedSchedule = draft.toCourtSchedule()
-                confirmDraftUseCase(id, confirmedSchedule)
+                val confirmedSchedule = draft.toCourtSchedule().copy(id = 0)
+                confirmDraftUseCase(mode.taskId, confirmedSchedule)
                 onComplete()
             } catch (e: Exception) {
                 _state.value = EditDraftState.Error("Ошибка подтверждения: ${e.message}")
@@ -169,15 +201,35 @@ class EditDraftViewModel(
     }
 
     fun rejectDraft(onComplete: () -> Unit) {
-        val id = _taskId.value ?: return
+        val mode = _mode.value as? EditMode.Draft ?: return
         viewModelScope.launch {
             try {
-                rejectDraftUseCase(id)
+                rejectDraftUseCase(mode.taskId)
                 onComplete()
             } catch (e: Exception) {
                 _state.value = EditDraftState.Error("Ошибка отклонения: ${e.message}")
             }
         }
+    }
+
+    fun saveConfirmed(onComplete: () -> Unit) {
+        val draft = _currentDraft.value ?: return
+        val mode = _mode.value as? EditMode.Confirmed ?: return
+        if (!_validation.value.isValid) return
+
+        viewModelScope.launch {
+            try {
+                val schedule = draft.toCourtSchedule().copy(id = mode.scheduleId)
+                updateConfirmedScheduleUseCase(schedule)
+                onComplete()
+            } catch (e: Exception) {
+                _state.value = EditDraftState.Error("Ошибка сохранения: ${e.message}")
+            }
+        }
+    }
+
+    fun cancelConfirmed(onComplete: () -> Unit) {
+        onComplete()
     }
 }
 

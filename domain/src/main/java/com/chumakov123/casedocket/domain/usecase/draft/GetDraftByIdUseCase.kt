@@ -1,4 +1,4 @@
-package com.chumakov123.casedocket.domain.usecase
+package com.chumakov123.casedocket.domain.usecase.draft
 
 import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository

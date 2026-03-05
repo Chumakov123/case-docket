@@ -19,11 +19,13 @@ import com.chumakov123.casedocket.domain.repository.OcrService
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.service.RecognitionServiceController
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
-import com.chumakov123.casedocket.domain.usecase.ConfirmDraftUseCase
-import com.chumakov123.casedocket.domain.usecase.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
-import com.chumakov123.casedocket.domain.usecase.RejectDraftUseCase
-import com.chumakov123.casedocket.domain.usecase.UpdateDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.ConfirmDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
@@ -36,6 +38,8 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val domainModule = module {
+    factory { GetConfirmedScheduleByIdUseCase(repository = get()) }
+    factory { UpdateConfirmedScheduleUseCase(repository = get()) }
     factory { DocumentInterpreter() }
     factory { ScheduleTableParser() }
     factory { ScheduleValidator() }
@@ -62,7 +66,9 @@ val appModule = module {
             updateDraftUseCase = get(),
             confirmDraftUseCase = get(),
             rejectDraftUseCase = get(),
-            scheduleValidator = get(),
+            getConfirmedScheduleUseCase = get(),
+            updateConfirmedScheduleUseCase = get(),
+            scheduleValidator = get()
         )
     }
     viewModel {
@@ -73,7 +79,7 @@ val appModule = module {
         )
     }
     viewModel { ConfirmedListViewModel(confirmedRepository = get()) }
-    
+
     factory { ScheduleRecognitionManager(get(), get()) }
     single<RecognitionServiceController> { RecognitionServiceControllerImpl(androidContext()) }
     single { AppForegroundTracker() }

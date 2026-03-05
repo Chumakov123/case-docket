@@ -28,6 +28,7 @@ fun ConfirmedScheduleEntity.toCourtSchedule(json: Json): CourtSchedule? {
     val cases = casesDto.map { it.toDomain() }
     val date = ScheduleDate.parse(this.date) ?: return null
     return CourtSchedule(
+        id = this.id,
         date = date,
         judge = Judge(this.judge),
         cases = cases

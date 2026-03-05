@@ -22,7 +22,7 @@ fun AppNavHost() {
                     navController.navigate("edit_draft/$taskId")
                 },
                 onNavigateToEditConfirmed = { confirmedId ->
-                    // navController.navigate("edit_confirmed/$confirmedId")
+                    navController.navigate("edit_confirmed/$confirmedId")
                 }
             )
         }
@@ -33,6 +33,18 @@ fun AppNavHost() {
             val taskId = backStackEntry.arguments?.getLong("taskId") ?: return@composable
             EditDraftScreen(
                 taskId = taskId,
+                confirmedId = null,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            "edit_confirmed/{id}",
+            arguments = listOf(navArgument("id") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getLong("id") ?: return@composable
+            EditDraftScreen(
+                taskId = null,
+                confirmedId = id,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
