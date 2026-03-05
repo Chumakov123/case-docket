@@ -13,14 +13,18 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.chumakov123.casedocket.presentation.navigation.AppNavHost
-import com.chumakov123.casedocket.presentation.theme.AppTheme
+import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import com.chumakov123.casedocket.service.RecognitionForegroundService
+import com.chumakov123.casedocket.ui.theme.CaseDocketTheme
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
-
+    private val settingsViewModel: SettingsViewModel by viewModel()
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -46,7 +50,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            AppTheme {
+            val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
+            CaseDocketTheme(theme = settings.theme) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

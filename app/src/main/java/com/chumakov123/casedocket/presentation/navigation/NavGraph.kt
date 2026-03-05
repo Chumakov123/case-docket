@@ -8,6 +8,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.chumakov123.casedocket.presentation.screens.EditDraftScreen
 import com.chumakov123.casedocket.presentation.screens.MainScreen
+import com.chumakov123.casedocket.presentation.screens.SettingsScreen
 
 @Composable
 fun AppNavHost() {
@@ -23,6 +24,9 @@ fun AppNavHost() {
                 },
                 onNavigateToEditConfirmed = { confirmedId ->
                     navController.navigate("edit_confirmed/$confirmedId")
+                },
+                onNavigateToSettings = {
+                    navController.navigate("settings")
                 }
             )
         }
@@ -45,6 +49,11 @@ fun AppNavHost() {
             EditDraftScreen(
                 taskId = null,
                 confirmedId = id,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("settings") {
+            SettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

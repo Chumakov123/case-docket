@@ -1,15 +1,18 @@
 package com.chumakov123.casedocket.presentation.screens
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Drafts
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,14 +22,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.chumakov123.casedocket.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onNavigateToEditDraft: (Long) -> Unit,
-    onNavigateToEditConfirmed: (Long) -> Unit // для этапа 6
+    onNavigateToEditConfirmed: (Long) -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        when (selectedTab) {
+                            0 -> stringResource(R.string.drafts)
+                            else -> stringResource(R.string.confirmed)
+                        }
+                    )
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+                }
+            )
+        },
         bottomBar = {
             BottomAppBar {
                 NavigationBarItem(
@@ -47,16 +69,12 @@ fun MainScreen(
         when (selectedTab) {
             0 -> DraftListScreen(
                 onNavigateToEdit = onNavigateToEditDraft,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.padding(paddingValues)
             )
 
             1 -> ConfirmedListScreen(
                 onEditClick = onNavigateToEditConfirmed,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
+                modifier = Modifier.padding(paddingValues)
             )
         }
     }

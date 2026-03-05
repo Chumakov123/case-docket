@@ -84,6 +84,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.lifecycle.process)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.androidx.datastore.preferences.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

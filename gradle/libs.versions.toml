@@ -24,6 +24,8 @@ kotlin-serialization = "1.10.0"
 lifecycleService = "2.10.0"
 lifecycleProcess = "2.10.0"
 navigationCompose = "2.9.7"
+datastoreCore = "1.2.0"
+datastorePreferencesCore = "1.2.0"
 
 [libraries]
 kotlin-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlin-serialization" }
@@ -62,6 +64,8 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycleService" }
 androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastoreCore" }
+androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "datastorePreferencesCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
