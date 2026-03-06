@@ -44,4 +44,9 @@
     <string name="notification_minutes">%d minutes</string>
     <string name="russian" translatable="false">Русский</string>
     <string name="english" translatable="false">English</string>
+    <string name="no_confirmed_schedules">Нет подтверждённых расписаний</string>
+    <string name="cases_count">Дел: %d</string>
+    <string name="edit_schedule">Редактировать расписание</string>
+    <string name="show_past">Показать прошедшие</string>
+    <string name="hide_past">Скрыть прошедшие</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.chumakov123.casedocket.presentation.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -21,11 +25,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
 import com.chumakov123.casedocket.domain.model.court.toHHMM
@@ -39,23 +50,76 @@ fun ConfirmedListScreen(
     modifier: Modifier = Modifier,
     viewModel: ConfirmedListViewModel = koinViewModel()
 ) {
-    val items by viewModel.items.collectAsState()
+    val activeItems by viewModel.activeItems.collectAsState()
+    val archivedItems by viewModel.archivedItems.collectAsState()
+    val hasArchived by viewModel.hasArchived.collectAsState()
+    val showArchived by viewModel.showArchived.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    if (items.isEmpty()) {
-        Text(
-            text = "Нет подтверждённых расписаний",
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            style = MaterialTheme.typography.bodyLarge
-        )
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshTime()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    if (activeItems.isEmpty() && archivedItems.isEmpty()) {
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.no_confirmed_schedules),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     } else {
         LazyColumn(
             modifier = modifier,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(16.dp)
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items) { item ->
+            if (hasArchived) {
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    )
+                    {
+                        ArchiveButton(
+                            showArchived = showArchived,
+                            onClick = { viewModel.toggleShowArchived() },
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                        )
+                    }
+
+                }
+            }
+
+            if (showArchived) {
+                items(archivedItems) { item ->
+                    when (item) {
+                        is ConfirmedListItem.Header -> ScheduleHeaderItem(
+                            schedule = item.schedule,
+                            onEditClick = { onEditClick(item.schedule.id) }
+                        )
+
+                        is ConfirmedListItem.Case -> CaseItem(
+                            case = item.case,
+                            isPast = item.isPast,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                    }
+                }
+            }
+
+            items(activeItems) { item ->
                 when (item) {
                     is ConfirmedListItem.Header -> ScheduleHeaderItem(
                         schedule = item.schedule,
@@ -64,6 +128,8 @@ fun ConfirmedListScreen(
 
                     is ConfirmedListItem.Case -> CaseItem(
                         case = item.case,
+                        isPast = item.isPast,
+                        modifier = Modifier.padding(start = 16.dp)
                     )
                 }
             }
@@ -90,7 +156,7 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
-                text = "Дел: ${schedule.cases.size}",
+                text = stringResource(R.string.cases_count, schedule.cases.size),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -101,7 +167,7 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
         ) {
             Icon(
                 Icons.Default.Edit,
-                contentDescription = "Редактировать расписание",
+                contentDescription = stringResource(R.string.edit_schedule),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -109,9 +175,11 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
 }
 
 @Composable
-fun CaseItem(case: CourtCase, modifier: Modifier = Modifier) {
+fun CaseItem(case: CourtCase, isPast: Boolean, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(if (isPast) 0.5f else 1f),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -135,13 +203,33 @@ fun CaseItem(case: CourtCase, modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
-
-            Spacer(Modifier.height(4.dp))
-
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = case.description.text,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+@Composable
+fun ArchiveButton(showArchived: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.small
+    ) {
+        Icon(
+            imageVector = if (showArchived) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.size(8.dp))
+        Text(
+            text = if (showArchived)
+                stringResource(R.string.hide_past)
+            else
+                stringResource(R.string.show_past)
+        )
     }
 }

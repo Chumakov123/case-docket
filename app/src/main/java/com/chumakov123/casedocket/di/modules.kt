@@ -27,6 +27,7 @@ import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.GetSettingsUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedSchedulesUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.ConfirmDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
@@ -55,6 +56,7 @@ val domainModule = module {
     factory { GetDraftByIdUseCase(repository = get()) }
     factory { UpdateDraftUseCase(repository = get()) }
 
+    factory { GetConfirmedSchedulesUseCase(repository = get()) }
     factory { GetConfirmedScheduleByIdUseCase(repository = get()) }
     factory { UpdateConfirmedScheduleUseCase(repository = get()) }
 
@@ -91,7 +93,7 @@ val appModule = module {
             imageSaver = get()
         )
     }
-    viewModel { ConfirmedListViewModel(confirmedRepository = get()) }
+    viewModel { ConfirmedListViewModel(getConfirmedSchedulesUseCase = get()) }
     viewModel {
         SettingsViewModel(
             getSettingsUseCase = get(),
