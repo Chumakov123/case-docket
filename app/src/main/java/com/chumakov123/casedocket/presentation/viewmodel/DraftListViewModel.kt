@@ -28,7 +28,6 @@ class DraftListViewModel(
 ) : ViewModel() {
 
     private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
-    val tasks: StateFlow<List<RecognitionTask>> = _tasks
 
     val taskGroups: StateFlow<TaskGroup> = _tasks.map { tasks ->
         TaskGroup(

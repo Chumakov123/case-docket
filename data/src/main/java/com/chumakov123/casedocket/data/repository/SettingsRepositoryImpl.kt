@@ -9,6 +9,7 @@ import com.chumakov123.casedocket.domain.model.Settings
 import com.chumakov123.casedocket.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Locale
 
 class SettingsRepositoryImpl(
     private val dataStore: DataStore<Preferences>
@@ -20,20 +21,31 @@ class SettingsRepositoryImpl(
         private val NOTIFICATION_MINUTES_KEY = intPreferencesKey("notification_minutes")
     }
 
-    override fun observeSettings(): Flow<Settings> =
-        dataStore.data.map { preferences ->
+    override fun observeSettings(): Flow<Settings> {
+        return dataStore.data.map { preferences ->
+            val savedLang = preferences[LANGUAGE_KEY]
+            val effectiveLang = savedLang ?: computeDefaultLanguage()
+
             Settings(
-                language = preferences[LANGUAGE_KEY] ?: "ru",
+                language = effectiveLang,
                 theme = preferences[THEME_KEY] ?: "system",
                 notificationMinutes = preferences[NOTIFICATION_MINUTES_KEY] ?: 10
             )
         }
+    }
 
     override suspend fun updateSettings(settings: Settings) {
         dataStore.edit { preferences ->
             preferences[LANGUAGE_KEY] = settings.language
             preferences[THEME_KEY] = settings.theme
             preferences[NOTIFICATION_MINUTES_KEY] = settings.notificationMinutes
+        }
+    }
+
+    private fun computeDefaultLanguage(): String {
+        return when (Locale.getDefault().language.lowercase()) {
+            "ru" -> "ru"
+            else -> "en"
         }
     }
 }
