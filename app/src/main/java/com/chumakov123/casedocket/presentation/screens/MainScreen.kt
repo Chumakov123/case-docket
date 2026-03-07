@@ -14,22 +14,23 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.presentation.viewmodel.MainViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     onNavigateToEditDraft: (Long) -> Unit,
     onNavigateToEditConfirmed: (Long) -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    viewModel: MainViewModel = koinViewModel()
 ) {
-    var selectedTab by remember { mutableIntStateOf(0) }
+    val selectedTab by viewModel.selectedTab.collectAsState()
 
     Scaffold(
         topBar = {
@@ -53,13 +54,13 @@ fun MainScreen(
             BottomAppBar {
                 NavigationBarItem(
                     selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
+                    onClick = { viewModel.selectTab(0) },
                     icon = { Icon(Icons.Default.Drafts, contentDescription = null) },
                     label = { Text(stringResource(R.string.drafts)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
+                    onClick = { viewModel.selectTab(1) },
                     icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
                     label = { Text(stringResource(R.string.confirmed)) }
                 )

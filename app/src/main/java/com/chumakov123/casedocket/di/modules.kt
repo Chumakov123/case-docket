@@ -41,6 +41,7 @@ import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
+import com.chumakov123.casedocket.presentation.viewmodel.MainViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
 import com.chumakov123.casedocket.worker.WorkManagerNotificationScheduler
@@ -100,6 +101,12 @@ val domainModule = module {
 }
 
 val appModule = module {
+    viewModel {
+        MainViewModel(
+            getSettingsUseCase = get(),
+            updateSettingsUseCase = get()
+        )
+    }
     viewModel {
         EditDraftViewModel(
             getDraftByIdUseCase = get(),
