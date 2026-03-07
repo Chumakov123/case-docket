@@ -19,6 +19,7 @@ import com.chumakov123.casedocket.domain.repository.ConfirmedScheduleRepository
 import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
 import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
 import com.chumakov123.casedocket.domain.repository.ImageSaver
+import com.chumakov123.casedocket.domain.repository.NotificationScheduler
 import com.chumakov123.casedocket.domain.repository.OcrService
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.repository.SettingsRepository
@@ -33,6 +34,7 @@ import com.chumakov123.casedocket.domain.usecase.draft.ConfirmDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
+import com.chumakov123.casedocket.domain.usecase.notification.RescheduleNotificationsUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSettingsUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
@@ -41,6 +43,7 @@ import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
+import com.chumakov123.casedocket.worker.WorkManagerNotificationScheduler
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.dsl.viewModel
@@ -51,17 +54,39 @@ val domainModule = module {
     factory { ScheduleTableParser() }
     factory { ScheduleValidator() }
 
-    factory { ConfirmDraftUseCase(taskRepository = get(), confirmedRepository = get()) }
+    factory {
+        RescheduleNotificationsUseCase(
+            confirmedRepository = get(),
+            notificationScheduler = get()
+        )
+    }
+
+    factory {
+        ConfirmDraftUseCase(
+            taskRepository = get(),
+            confirmedRepository = get(),
+            rescheduleNotificationsUseCase = get()
+        )
+    }
     factory { RejectDraftUseCase(taskRepository = get()) }
     factory { GetDraftByIdUseCase(repository = get()) }
     factory { UpdateDraftUseCase(repository = get()) }
 
     factory { GetConfirmedSchedulesUseCase(repository = get()) }
     factory { GetConfirmedScheduleByIdUseCase(repository = get()) }
-    factory { UpdateConfirmedScheduleUseCase(repository = get()) }
+    factory {
+        UpdateConfirmedScheduleUseCase(
+            repository = get(), rescheduleNotificationsUseCase = get()
+        )
+    }
 
     factory { GetSettingsUseCase(repository = get()) }
-    factory { UpdateSettingsUseCase(repository = get()) }
+    factory {
+        UpdateSettingsUseCase(
+            repository = get(),
+            rescheduleNotificationsUseCase = get()
+        )
+    }
 
     factory {
         RecognizeScheduleUseCase(
@@ -104,6 +129,14 @@ val appModule = module {
     factory { ScheduleRecognitionManager(get(), get()) }
     single<RecognitionServiceController> { RecognitionServiceControllerImpl(androidContext()) }
     single { AppForegroundTracker() }
+
+    single<NotificationScheduler> {
+        WorkManagerNotificationScheduler(
+            context = androidContext(),
+            settingsRepository = get(),
+            json = get()
+        )
+    }
 }
 
 val dataModule = module {

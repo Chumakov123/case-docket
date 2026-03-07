@@ -49,4 +49,8 @@
     <string name="edit_schedule">Редактировать расписание</string>
     <string name="show_past">Показать прошедшие</string>
     <string name="hide_past">Скрыть прошедшие</string>
+    <string name="notification_channel_name">Upcoming cases</string>
+    <string name="notification_title_single">Court case at %s</string>
+    <string name="notification_title_multiple">Court cases at %s (%d)</string>
+    <string name="notification_summary">Tap to view</string>
 </resources>
