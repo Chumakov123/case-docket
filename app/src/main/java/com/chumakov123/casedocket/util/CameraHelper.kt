@@ -13,10 +13,16 @@ object CameraHelper {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "JPEG_${timeStamp}_"
         val storageDir = context.cacheDir
+
+        val tempDir = File(storageDir, "temp")
+        if (!tempDir.exists()) {
+            tempDir.mkdirs()
+        }
+
         return File.createTempFile(
             imageFileName,
             ".jpg",
-            storageDir
+            tempDir
         )
     }
 
@@ -26,5 +32,13 @@ object CameraHelper {
             "${context.packageName}.fileprovider",
             file
         )
+    }
+
+    fun deleteTempFile(context: Context, uri: Uri) {
+        try {
+            context.contentResolver.delete(uri, null, null)
+        } catch (e: Exception) {
+
+        }
     }
 }

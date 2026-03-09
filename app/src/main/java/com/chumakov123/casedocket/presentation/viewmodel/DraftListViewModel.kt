@@ -105,6 +105,36 @@ class DraftListViewModel(
         }
     }
 
+    fun processCapturedImage(context: Context, imageUri: Uri) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            try {
+                val bytes =
+                    context.contentResolver.openInputStream(imageUri)?.use { it.readBytes() }
+                if (bytes != null) {
+                    val filename = "camera_${System.currentTimeMillis()}.jpg"
+                    val savedPath = imageSaver.save(bytes, filename)
+                    if (savedPath != null) {
+                        manager.submitImage("file://$savedPath")
+                    } else {
+                        _errorMessage.value = "Не удалось сохранить фото"
+                    }
+                } else {
+                    _errorMessage.value = "Не удалось прочитать фото"
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Ошибка при обработке фото: ${e.message}"
+            } finally {
+                _isLoading.value = false
+                try {
+                    context.contentResolver.delete(imageUri, null, null)
+                } catch (e: Exception) {
+
+                }
+            }
+        }
+    }
+
     fun retryTask(taskId: Long) {
         viewModelScope.launch {
             val task = _tasks.value.find { it.id == taskId } ?: return@launch
@@ -121,5 +151,9 @@ class DraftListViewModel(
 
     fun clearErrorMessage() {
         _errorMessage.value = null
+    }
+
+    fun showError(message: String) {
+        _errorMessage.value = message
     }
 }

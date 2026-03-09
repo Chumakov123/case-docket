@@ -1,5 +1,6 @@
 package com.chumakov123.casedocket.presentation.screens
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,14 +43,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
+import com.chumakov123.casedocket.util.CameraHelper
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -66,6 +71,33 @@ fun DraftListScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val hasCamera = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && tempCameraUri != null) {
+            viewModel.processCapturedImage(context, tempCameraUri!!)
+        } else {
+            tempCameraUri?.let { CameraHelper.deleteTempFile(context, it) }
+        }
+        tempCameraUri = null
+    }
+
+    fun launchCamera(uri: Uri?) {
+        uri?.let { cameraLauncher.launch(it) }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            launchCamera(tempCameraUri)
+        } else {
+            viewModel.showError("Необходимо разрешение на использование камеры")
+        }
+    }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -99,7 +131,23 @@ fun DraftListScreen(
             ) {
                 if (hasCamera) {
                     FloatingActionButton(
-                        onClick = { /* TODO: камера */ },
+                        onClick = {
+                            val permission = Manifest.permission.CAMERA
+                            if (ContextCompat.checkSelfPermission(
+                                    context,
+                                    permission
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                val photoFile = CameraHelper.createImageFile(context)
+                                val uri = CameraHelper.getUriForFile(context, photoFile)
+                                tempCameraUri = uri
+                                launchCamera(uri)
+                            } else {
+
+                                tempCameraUri = null
+                                permissionLauncher.launch(permission)
+                            }
+                        },
                         containerColor = MaterialTheme.colorScheme.primary
                     ) {
                         Icon(Icons.Default.CameraAlt, contentDescription = "Сделать снимок")
