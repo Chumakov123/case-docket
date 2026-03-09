@@ -5,7 +5,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.chumakov123.casedocket.data.dto.CourtCaseDto
 import com.chumakov123.casedocket.data.mapper.toDomain
-import com.chumakov123.casedocket.notification.NotificationHelper
+import com.chumakov123.casedocket.util.NotificationHelper
 import kotlinx.serialization.json.Json
 
 class NotificationWorker(

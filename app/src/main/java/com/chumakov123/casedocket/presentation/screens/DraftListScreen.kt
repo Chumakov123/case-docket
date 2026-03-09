@@ -1,5 +1,6 @@
 package com.chumakov123.casedocket.presentation.screens
 
+import android.content.pm.PackageManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,8 +14,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -30,6 +33,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -50,6 +54,8 @@ fun DraftListScreen(
     val context = LocalContext.current
     val taskGroups by viewModel.taskGroups.collectAsState()
 
+    val hasCamera = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -58,10 +64,32 @@ fun DraftListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.addTestImage(context) }
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить тестовое изображение")
+                if (hasCamera) {
+                    FloatingActionButton(
+                        onClick = { /* TODO: открыть камеру */ },
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = "Сделать снимок")
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = { /* TODO: открыть галерею */ },
+                    containerColor = MaterialTheme.colorScheme.secondary
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Выбрать из галереи")
+                }
+                
+                FloatingActionButton(
+                    onClick = { viewModel.addTestImage(context) },
+                    containerColor = MaterialTheme.colorScheme.tertiary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Добавить тестовое изображение")
+                }
             }
         }
     ) { paddingValues ->
@@ -173,7 +201,7 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
                 .fillMaxWidth()
                 .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text("Задача #${task.id}")
