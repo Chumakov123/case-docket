@@ -1,6 +1,7 @@
 package com.chumakov123.casedocket.presentation.viewmodel
 
 import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.chumakov123.casedocket.domain.model.RecognitionTask
@@ -8,6 +9,7 @@ import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.domain.repository.ImageSaver
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +30,10 @@ class DraftListViewModel(
 ) : ViewModel() {
 
     private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
 
     val taskGroups: StateFlow<TaskGroup> = _tasks.map { tasks ->
         TaskGroup(
@@ -58,7 +64,43 @@ class DraftListViewModel(
                     manager.submitImage("file://$path")
                 }
             } catch (e: Exception) {
+                _errorMessage.value = "Ошибка загрузки тестового изображения: ${e.message}"
+            }
+        }
+    }
 
+    fun processSelectedImages(context: Context, uris: List<Uri>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _isLoading.value = true
+            var successCount = 0
+            var errorCount = 0
+            try {
+                uris.forEach { uri ->
+                    try {
+                        val bytes =
+                            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                        if (bytes != null) {
+                            val filename =
+                                "gallery_${System.currentTimeMillis()}_${uri.hashCode()}.jpg"
+                            val savedPath = imageSaver.save(bytes, filename)
+                            if (savedPath != null) {
+                                manager.submitImage("file://$savedPath")
+                                successCount++
+                            } else {
+                                errorCount++
+                            }
+                        } else {
+                            errorCount++
+                        }
+                    } catch (e: Exception) {
+                        errorCount++
+                    }
+                }
+            } finally {
+                _isLoading.value = false
+                if (errorCount > 0) {
+                    _errorMessage.value = "Загружено: $successCount, ошибок: $errorCount"
+                }
             }
         }
     }
@@ -75,5 +117,9 @@ class DraftListViewModel(
         viewModelScope.launch {
             repository.deleteTask(taskId)
         }
+    }
+
+    fun clearErrorMessage() {
+        _errorMessage.value = null
     }
 }
