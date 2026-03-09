@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -159,13 +158,6 @@ fun DraftListScreen(
                     containerColor = MaterialTheme.colorScheme.secondary
                 ) {
                     Icon(Icons.Default.PhotoLibrary, contentDescription = "Выбрать из галереи")
-                }
-
-                FloatingActionButton(
-                    onClick = { viewModel.addTestImage(context) },
-                    containerColor = MaterialTheme.colorScheme.tertiary
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Добавить тестовое изображение")
                 }
             }
         }

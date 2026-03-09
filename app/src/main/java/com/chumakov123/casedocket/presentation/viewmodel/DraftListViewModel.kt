@@ -55,20 +55,6 @@ class DraftListViewModel(
         }
     }
 
-    fun addTestImage(context: Context, filename: String = "test_schedule.jpg") {
-        viewModelScope.launch {
-            try {
-                val bytes = context.assets.open(filename).use { it.readBytes() }
-                val path = imageSaver.save(bytes, filename)
-                if (path != null) {
-                    manager.submitImage("file://$path")
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = "Ошибка загрузки тестового изображения: ${e.message}"
-            }
-        }
-    }
-
     fun processSelectedImages(context: Context, uris: List<Uri>) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
