@@ -3,6 +3,8 @@ package com.chumakov123.casedocket.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import com.chumakov123.casedocket.data.alarm.ActiveAlarmStore
+import com.chumakov123.casedocket.data.alarm.DataStoreActiveAlarmStore
 import com.chumakov123.casedocket.data.local.AppDatabase
 import com.chumakov123.casedocket.data.local.dao.ConfirmedScheduleDao
 import com.chumakov123.casedocket.data.local.dao.RecognitionTaskDao
@@ -44,6 +46,7 @@ import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.MainViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import com.chumakov123.casedocket.service.RecognitionServiceControllerImpl
+import com.chumakov123.casedocket.worker.AlarmManagerNotificationScheduler
 import com.chumakov123.casedocket.worker.WorkManagerNotificationScheduler
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
@@ -137,11 +140,21 @@ val appModule = module {
     single<RecognitionServiceController> { RecognitionServiceControllerImpl(androidContext()) }
     single { AppForegroundTracker() }
 
-    single<NotificationScheduler> {
+    single<WorkManagerNotificationScheduler> {
         WorkManagerNotificationScheduler(
             context = androidContext(),
             settingsRepository = get(),
             json = get()
+        )
+    }
+
+    single<NotificationScheduler> {
+        AlarmManagerNotificationScheduler(
+            context = androidContext(),
+            settingsRepository = get(),
+            json = get(),
+            workManagerScheduler = get<WorkManagerNotificationScheduler>(),
+            activeAlarmStore = get()
         )
     }
 }
@@ -176,6 +189,8 @@ val dataModule = module {
         )
     }
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
+
+    single<ActiveAlarmStore> { DataStoreActiveAlarmStore(get()) }
 }
 
 val appModules = listOf(
