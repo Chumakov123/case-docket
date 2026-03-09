@@ -44,6 +44,19 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun updateSelectedTab(tabIndex: Int) {
+        dataStore.edit { preferences ->
+            val currentLang = preferences[LANGUAGE_KEY] ?: computeDefaultLanguage()
+            val currentTheme = preferences[THEME_KEY] ?: "system"
+            val currentNotifications = preferences[NOTIFICATION_MINUTES_KEY] ?: 10
+
+            preferences[LANGUAGE_KEY] = currentLang
+            preferences[THEME_KEY] = currentTheme
+            preferences[NOTIFICATION_MINUTES_KEY] = currentNotifications
+            preferences[LAST_TAB_KEY] = tabIndex
+        }
+    }
+
     private fun computeDefaultLanguage(): String {
         return when (Locale.getDefault().language.lowercase()) {
             "ru" -> "ru"

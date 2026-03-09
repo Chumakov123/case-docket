@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface SettingsRepository {
     fun observeSettings(): Flow<Settings>
     suspend fun updateSettings(settings: Settings)
+    suspend fun updateSelectedTab(tabIndex: Int)
 }

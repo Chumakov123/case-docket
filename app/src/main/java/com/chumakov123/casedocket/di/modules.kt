@@ -37,6 +37,7 @@ import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.notification.RescheduleNotificationsUseCase
+import com.chumakov123.casedocket.domain.usecase.settings.UpdateSelectedTabUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSettingsUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
@@ -91,6 +92,9 @@ val domainModule = module {
             rescheduleNotificationsUseCase = get()
         )
     }
+    factory {
+        UpdateSelectedTabUseCase(repository = get())
+    }
 
     factory {
         RecognizeScheduleUseCase(
@@ -107,7 +111,7 @@ val appModule = module {
     viewModel {
         MainViewModel(
             getSettingsUseCase = get(),
-            updateSettingsUseCase = get()
+            updateSelectedTabUseCase = get()
         )
     }
     viewModel {
