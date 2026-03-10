@@ -57,7 +57,6 @@
     <string name="loading">Загрузка…</string>
     <string name="reject">Отклонить</string>
     <string name="cases_list_empty">Список дел пуст</string>
-    <string name="camera_permission_required">Необходимо разрешение на использование камеры</string>
     <string name="take_photo">Сделать снимок</string>
     <string name="choose_from_gallery">Выбрать из галереи</string>
     <string name="pending_section">В обработке</string>
@@ -87,4 +86,15 @@
     <string name="recognition_channel_description">Уведомления о процессе распознавания</string>
     <string name="completion_channel_name">Завершение распознавания</string>
     <string name="completion_channel_description">Уведомления о завершении обработки всех изображений</string>
+    <string name="draft_not_found">Черновик не найден</string>
+    <string name="schedule_not_found">Расписание не найдено</string>
+    <string name="loading_error">Ошибка загрузки: %s</string>
+    <string name="confirmation_error">Ошибка подтверждения: %s</string>
+    <string name="rejection_error">Ошибка отклонения: %s</string>
+    <string name="save_error">Ошибка сохранения: %s</string>
+    <string name="upload_summary">Загружено: %d, ошибок: %d</string>
+    <string name="photo_save_failed">Не удалось сохранить фото</string>
+    <string name="photo_read_failed">Не удалось прочитать фото</string>
+    <string name="photo_processing_error">Ошибка при обработке фото: %s</string>
+    <string name="camera_permission_required">Необходимо разрешение на использование камеры</string>
 </resources>

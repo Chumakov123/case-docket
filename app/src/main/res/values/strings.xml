@@ -60,7 +60,6 @@
     <string name="loading">Loading…</string>
     <string name="reject">Reject</string>
     <string name="cases_list_empty">Cases list is empty</string>
-    <string name="camera_permission_required">Camera permission is required</string>
     <string name="take_photo">Take photo</string>
     <string name="choose_from_gallery">Choose from gallery</string>
     <string name="pending_section">Processing</string>
@@ -90,4 +89,15 @@
     <string name="recognition_channel_description">Notifications about recognition process</string>
     <string name="completion_channel_name">Recognition completed</string>
     <string name="completion_channel_description">Notifications when all images are processed</string>
+    <string name="draft_not_found">Draft not found</string>
+    <string name="schedule_not_found">Schedule not found</string>
+    <string name="loading_error">Loading error: %s</string>
+    <string name="confirmation_error">Confirmation error: %s</string>
+    <string name="rejection_error">Rejection error: %s</string>
+    <string name="save_error">Save error: %s</string>
+    <string name="upload_summary">Uploaded: %d, errors: %d</string>
+    <string name="photo_save_failed">Failed to save photo</string>
+    <string name="photo_read_failed">Failed to read photo</string>
+    <string name="photo_processing_error">Photo processing error: %s</string>
+    <string name="camera_permission_required">Camera permission is required</string>
 </resources>
