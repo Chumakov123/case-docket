@@ -1,6 +1,7 @@
 package com.chumakov123.casedocket.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -25,7 +26,7 @@ fun AppNavHost() {
                 onNavigateToEditConfirmed = { confirmedId ->
                     navController.navigate("edit_confirmed/$confirmedId")
                 },
-                onNavigateToSettings = {
+                onNavigateToSettings = dropUnlessResumed {
                     navController.navigate("settings")
                 }
             )
@@ -38,7 +39,9 @@ fun AppNavHost() {
             EditDraftScreen(
                 taskId = taskId,
                 confirmedId = null,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = dropUnlessResumed {
+                    navController.popBackStack()
+                }
             )
         }
         composable(
@@ -49,12 +52,16 @@ fun AppNavHost() {
             EditDraftScreen(
                 taskId = null,
                 confirmedId = id,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = dropUnlessResumed {
+                    navController.popBackStack()
+                }
             )
         }
         composable("settings") {
             SettingsScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = dropUnlessResumed {
+                    navController.popBackStack()
+                }
             )
         }
     }
