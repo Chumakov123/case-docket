@@ -9,6 +9,7 @@ import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.domain.repository.ImageSaver
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
+import com.chumakov123.casedocket.util.ErrorMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,8 +33,8 @@ class DraftListViewModel(
     private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    private val _errorMessage = MutableStateFlow<ErrorMessage?>(null)
+    val errorMessage: StateFlow<ErrorMessage?> = _errorMessage
 
     val taskGroups: StateFlow<TaskGroup> = _tasks.map { tasks ->
         TaskGroup(
@@ -85,7 +86,7 @@ class DraftListViewModel(
             } finally {
                 _isLoading.value = false
                 if (errorCount > 0) {
-                    _errorMessage.value = "Загружено: $successCount, ошибок: $errorCount"
+                    _errorMessage.value = ErrorMessage.UploadSummary(successCount, errorCount)
                 }
             }
         }
@@ -103,13 +104,13 @@ class DraftListViewModel(
                     if (savedPath != null) {
                         manager.submitImage("file://$savedPath")
                     } else {
-                        _errorMessage.value = "Не удалось сохранить фото"
+                        _errorMessage.value = ErrorMessage.PhotoSaveFailed
                     }
                 } else {
-                    _errorMessage.value = "Не удалось прочитать фото"
+                    _errorMessage.value = ErrorMessage.PhotoReadFailed
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Ошибка при обработке фото: ${e.message}"
+                _errorMessage.value = ErrorMessage.PhotoProcessingError(e.message ?: "")
             } finally {
                 _isLoading.value = false
                 try {
@@ -139,7 +140,7 @@ class DraftListViewModel(
         _errorMessage.value = null
     }
 
-    fun showError(message: String) {
+    fun showError(message: ErrorMessage) {
         _errorMessage.value = message
     }
 }

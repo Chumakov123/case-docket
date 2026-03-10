@@ -56,6 +56,8 @@ import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.util.CameraHelper
+import com.chumakov123.casedocket.util.ErrorMessage
+import com.chumakov123.casedocket.util.toDisplayString
 import org.koin.androidx.compose.koinViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -90,15 +92,13 @@ fun DraftListScreen(
         uri?.let { cameraLauncher.launch(it) }
     }
 
-    val cameraPermissionMessage = stringResource(R.string.camera_permission_required)
-
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             launchCamera(tempCameraUri)
         } else {
-            viewModel.showError(cameraPermissionMessage)
+            viewModel.showError(ErrorMessage.CameraPermissionRequired)
         }
     }
 
@@ -111,10 +111,12 @@ fun DraftListScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
+    
+    val errorText = errorMessage?.toDisplayString()
 
-    LaunchedEffect(errorMessage) {
-        if (errorMessage != null) {
-            snackbarHostState.showSnackbar(errorMessage!!)
+    LaunchedEffect(errorText) {
+        if (errorText != null) {
+            snackbarHostState.showSnackbar(errorText)
             viewModel.clearErrorMessage()
         }
     }

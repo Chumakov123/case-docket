@@ -19,6 +19,7 @@ import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
+import com.chumakov123.casedocket.util.ErrorMessage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,7 +32,7 @@ sealed class EditDraftState {
     object Idle : EditDraftState()
     object Loading : EditDraftState()
     object Success : EditDraftState()
-    data class Error(val message: String) : EditDraftState()
+    data class Error(val type: ErrorMessage) : EditDraftState() // изменено
 }
 
 sealed class EditMode {
@@ -99,10 +100,12 @@ class EditDraftViewModel(
                     _currentDraft.value = draft
                     _state.value = EditDraftState.Success
                 } else {
-                    _state.value = EditDraftState.Error("Черновик не найден")
+                    _state.value = EditDraftState.Error(ErrorMessage.DraftNotFound)
                 }
             } catch (e: Exception) {
-                _state.value = EditDraftState.Error("Ошибка загрузки: ${e.message}")
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.LoadingError(e.message ?: "")
+                )
             }
         }
     }
@@ -116,10 +119,12 @@ class EditDraftViewModel(
                     _currentDraft.value = schedule.toDraft()
                     _state.value = EditDraftState.Success
                 } else {
-                    _state.value = EditDraftState.Error("Расписание не найдено")
+                    _state.value = EditDraftState.Error(ErrorMessage.ScheduleNotFound)
                 }
             } catch (e: Exception) {
-                _state.value = EditDraftState.Error("Ошибка загрузки: ${e.message}")
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.LoadingError(e.message ?: "")
+                )
             }
         }
     }
@@ -195,7 +200,9 @@ class EditDraftViewModel(
                 confirmDraftUseCase(mode.taskId, confirmedSchedule)
                 onComplete()
             } catch (e: Exception) {
-                _state.value = EditDraftState.Error("Ошибка подтверждения: ${e.message}")
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.ConfirmationError(e.message ?: "")
+                )
             }
         }
     }
@@ -207,7 +214,9 @@ class EditDraftViewModel(
                 rejectDraftUseCase(mode.taskId)
                 onComplete()
             } catch (e: Exception) {
-                _state.value = EditDraftState.Error("Ошибка отклонения: ${e.message}")
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.RejectionError(e.message ?: "")
+                )
             }
         }
     }
@@ -223,7 +232,9 @@ class EditDraftViewModel(
                 updateConfirmedScheduleUseCase(schedule)
                 onComplete()
             } catch (e: Exception) {
-                _state.value = EditDraftState.Error("Ошибка сохранения: ${e.message}")
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.SaveError(e.message ?: "")
+                )
             }
         }
     }

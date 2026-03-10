@@ -36,6 +36,7 @@ import com.chumakov123.casedocket.presentation.screens.components.ScheduleHeader
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftState
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.EditMode
+import com.chumakov123.casedocket.util.toDisplayString
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -147,7 +148,7 @@ fun EditDraftScreen(
             is EditDraftState.Error -> {
                 val currentMode = mode
                 ErrorState(
-                    message = currentState.message,
+                    message = currentState.type.toDisplayString(),
                     onRetry = {
                         when (currentMode) {
                             is EditMode.Draft -> viewModel.setMode(currentMode)
