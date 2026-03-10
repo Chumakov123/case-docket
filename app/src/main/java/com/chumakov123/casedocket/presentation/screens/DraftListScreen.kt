@@ -48,8 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
@@ -88,13 +90,15 @@ fun DraftListScreen(
         uri?.let { cameraLauncher.launch(it) }
     }
 
+    val cameraPermissionMessage = stringResource(R.string.camera_permission_required)
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
             launchCamera(tempCameraUri)
         } else {
-            viewModel.showError("Необходимо разрешение на использование камеры")
+            viewModel.showError(cameraPermissionMessage)
         }
     }
 
@@ -120,7 +124,7 @@ fun DraftListScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Черновики") }
+                title = { Text(stringResource(R.string.recognition)) }
             )
         },
         floatingActionButton = {
@@ -142,14 +146,16 @@ fun DraftListScreen(
                                 tempCameraUri = uri
                                 launchCamera(uri)
                             } else {
-
                                 tempCameraUri = null
                                 permissionLauncher.launch(permission)
                             }
                         },
                         containerColor = MaterialTheme.colorScheme.primary
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = "Сделать снимок")
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = stringResource(R.string.take_photo)
+                        )
                     }
                 }
 
@@ -157,7 +163,10 @@ fun DraftListScreen(
                     onClick = { galleryLauncher.launch("image/*") },
                     containerColor = MaterialTheme.colorScheme.secondary
                 ) {
-                    Icon(Icons.Default.PhotoLibrary, contentDescription = "Выбрать из галереи")
+                    Icon(
+                        Icons.Default.PhotoLibrary,
+                        contentDescription = stringResource(R.string.choose_from_gallery)
+                    )
                 }
             }
         }
@@ -171,11 +180,10 @@ fun DraftListScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 contentPadding = PaddingValues(bottom = 80.dp)
             ) {
-                // Секция "В обработке"
                 if (taskGroups.pendingProcessing.isNotEmpty()) {
                     item {
                         Text(
-                            text = "В обработке",
+                            text = stringResource(R.string.pending_section),
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -184,11 +192,10 @@ fun DraftListScreen(
                     }
                 }
 
-                // Секция "Готово к проверке"
                 if (taskGroups.completed.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Готово к проверке",
+                            text = stringResource(R.string.ready_section),
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -200,11 +207,10 @@ fun DraftListScreen(
                     }
                 }
 
-                // Секция "Ошибки"
                 if (taskGroups.failed.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Ошибки",
+                            text = stringResource(R.string.failed_section),
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -223,7 +229,7 @@ fun DraftListScreen(
                 ) {
                     item {
                         Text(
-                            text = "Нет задач. Нажмите кнопку '+' чтобы добавить тестовое изображение.",
+                            text = stringResource(R.string.no_images_message),
                             modifier = Modifier.padding(16.dp)
                         )
                     }
@@ -243,6 +249,13 @@ fun DraftListScreen(
 
 @Composable
 fun PendingTaskItem(task: RecognitionTask) {
+    val statusText = when (task.status) {
+        TaskStatus.PENDING -> stringResource(R.string.status_pending)
+        TaskStatus.PROCESSING -> stringResource(R.string.status_processing)
+        TaskStatus.COMPLETED -> stringResource(R.string.status_completed)
+        TaskStatus.FAILED -> stringResource(R.string.status_failed)
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -258,8 +271,11 @@ fun PendingTaskItem(task: RecognitionTask) {
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Text("Задача #${task.id}")
-            Text("Статус: ${task.status.name}", style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(R.string.image_number, task.id))
+            Text(
+                text = stringResource(R.string.status_label, statusText),
+                style = MaterialTheme.typography.bodySmall
+            )
             if (task.status == TaskStatus.PROCESSING) {
                 Spacer(modifier = Modifier.height(8.dp))
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
@@ -282,15 +298,21 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Задача #${task.id}")
+                Text(stringResource(R.string.image_number, task.id))
                 Text(
-                    "Создана: ${formatDate(task.createdAt)}",
+                    text = stringResource(R.string.uploaded_label, formatDate(task.createdAt)),
                     style = MaterialTheme.typography.bodySmall
                 )
-                Text("Распознано", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    text = stringResource(R.string.recognized_label),
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             IconButton(onClick = onEditClick) {
-                Icon(Icons.Default.Edit, contentDescription = "Редактировать")
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit)
+                )
             }
         }
     }
@@ -298,6 +320,8 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
 
 @Composable
 fun FailedTaskItem(task: RecognitionTask, onRetryClick: () -> Unit, onDeleteClick: () -> Unit) {
+    val errorMessage = task.errorMessage ?: stringResource(R.string.unknown_error)
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -309,9 +333,9 @@ fun FailedTaskItem(task: RecognitionTask, onRetryClick: () -> Unit, onDeleteClic
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Text("Задача #${task.id}")
+            Text(stringResource(R.string.image_number, task.id))
             Text(
-                "Ошибка: ${task.errorMessage ?: "Неизвестная ошибка"}",
+                text = stringResource(R.string.error_label, errorMessage),
                 style = MaterialTheme.typography.bodySmall
             )
             Row(
@@ -319,10 +343,16 @@ fun FailedTaskItem(task: RecognitionTask, onRetryClick: () -> Unit, onDeleteClic
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(onClick = onRetryClick) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Повторить")
+                    Icon(
+                        Icons.Default.Refresh,
+                        contentDescription = stringResource(R.string.retry_button)
+                    )
                 }
                 IconButton(onClick = onDeleteClick) {
-                    Icon(Icons.Default.Delete, contentDescription = "Удалить")
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.delete)
+                    )
                 }
             }
         }

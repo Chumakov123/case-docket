@@ -1,6 +1,5 @@
 package com.chumakov123.casedocket.service
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -44,7 +43,7 @@ class RecognitionForegroundService : LifecycleService() {
         super.onCreate()
         createNotificationChannel()
         createCompletionNotificationChannel()
-        startForeground(NOTIFICATION_ID, createNotification("Сервис запущен"))
+        startForeground(NOTIFICATION_ID, createNotification(getString(R.string.service_started)))
 
         lifecycleScope.launch {
             repairStuckTasks()
@@ -55,10 +54,10 @@ class RecognitionForegroundService : LifecycleService() {
     private fun createCompletionNotificationChannel() {
         val channel = NotificationChannel(
             COMPLETION_CHANNEL_ID,
-            "Завершение распознавания",
+            getString(R.string.completion_channel_name),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Уведомления о завершении обработки всех изображений"
+            description = getString(R.string.completion_channel_description)
         }
         notificationManager.createNotificationChannel(channel)
     }
@@ -84,7 +83,7 @@ class RecognitionForegroundService : LifecycleService() {
                     processTask(task)
                 }
             } catch (e: CancellationException) {
-
+                // нормальное завершение
             } finally {
                 if (processedTasksCount > 0) {
                     showCompletionNotification()
@@ -95,7 +94,7 @@ class RecognitionForegroundService : LifecycleService() {
     }
 
     private suspend fun processTask(task: RecognitionTask) {
-        updateNotification("Обработка задачи ${task.id}")
+        updateNotification(getString(R.string.processing_task, task.id))
         try {
             val imageBytes = loadImageBytes(task.imageUri)
             val result = withTimeout(120_000) {
@@ -106,10 +105,10 @@ class RecognitionForegroundService : LifecycleService() {
             manager.completeTask(task.id, json)
             processedTasksCount++
         } catch (e: TimeoutCancellationException) {
-            manager.failTask(task.id, "OCR timeout")
+            manager.failTask(task.id, getString(R.string.error_ocr_timeout))
             processedTasksCount++
         } catch (e: Exception) {
-            manager.failTask(task.id, e.message ?: "Unknown error")
+            manager.failTask(task.id, e.message ?: getString(R.string.error_unknown))
             processedTasksCount++
         }
     }
@@ -145,22 +144,22 @@ class RecognitionForegroundService : LifecycleService() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Распознавание расписания")
+            .setContentTitle(getString(R.string.notification_title_recognition))
             .setContentText(text)
             .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setOngoing(true)
-            .setContentIntent(pendingIntent)   // ← добавляем обработчик клика
+            .setContentIntent(pendingIntent)
             .build()
     }
 
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Распознавание",
+            getString(R.string.recognition_channel_name),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Уведомления о процессе распознавания"
+            description = getString(R.string.recognition_channel_description)
         }
         notificationManager.createNotificationChannel(channel)
     }
@@ -171,7 +170,7 @@ class RecognitionForegroundService : LifecycleService() {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 return
             }
         }
@@ -187,8 +186,8 @@ class RecognitionForegroundService : LifecycleService() {
         )
 
         val notification = NotificationCompat.Builder(this, COMPLETION_CHANNEL_ID)
-            .setContentTitle("Распознавание завершено")
-            .setContentText("Все изображения обработаны")
+            .setContentTitle(getString(R.string.completion_title))
+            .setContentText(getString(R.string.completion_text))
             .setSmallIcon(R.drawable.ic_notification)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)

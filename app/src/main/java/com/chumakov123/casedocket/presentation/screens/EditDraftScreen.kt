@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -26,7 +26,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.presentation.screens.components.CourtCaseCard
 import com.chumakov123.casedocket.presentation.screens.components.ErrorState
 import com.chumakov123.casedocket.presentation.screens.components.LoadingState
@@ -62,15 +64,18 @@ fun EditDraftScreen(
                 title = {
                     Text(
                         when (mode) {
-                            is EditMode.Draft -> "Редактирование черновика"
-                            is EditMode.Confirmed -> "Редактирование расписания"
-                            null -> "Загрузка..."
+                            is EditMode.Draft -> stringResource(R.string.edit_draft_title)
+                            is EditMode.Confirmed -> stringResource(R.string.edit_confirmed_title)
+                            null -> stringResource(R.string.loading)
                         }
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
                     }
                 }
             )
@@ -89,14 +94,20 @@ fun EditDraftScreen(
                                 onClick = { viewModel.rejectDraft(onNavigateBack) },
                                 containerColor = MaterialTheme.colorScheme.errorContainer
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "Отклонить")
+                                Icon(
+                                    Icons.Default.DeleteForever,
+                                    contentDescription = stringResource(R.string.reject)
+                                )
                             }
                             if (validation.isValid) {
                                 FloatingActionButton(
                                     onClick = { viewModel.confirmDraft(onNavigateBack) },
                                     containerColor = MaterialTheme.colorScheme.primary
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = "Подтвердить")
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = stringResource(R.string.confirm)
+                                    )
                                 }
                             }
                         }
@@ -106,14 +117,20 @@ fun EditDraftScreen(
                                 onClick = { viewModel.cancelConfirmed(onNavigateBack) },
                                 containerColor = MaterialTheme.colorScheme.errorContainer
                             ) {
-                                Icon(Icons.Default.Close, contentDescription = "Отмена")
+                                Icon(
+                                    Icons.Default.DeleteForever,
+                                    contentDescription = stringResource(R.string.cancel)
+                                )
                             }
                             if (validation.isValid) {
                                 FloatingActionButton(
                                     onClick = { viewModel.saveConfirmed(onNavigateBack) },
                                     containerColor = MaterialTheme.colorScheme.primary
                                 ) {
-                                    Icon(Icons.Default.Check, contentDescription = "Сохранить")
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = stringResource(R.string.save)
+                                    )
                                 }
                             }
                         }
@@ -172,7 +189,7 @@ fun EditDraftScreen(
                         if (validation.casesError) {
                             item {
                                 Text(
-                                    "Список дел пуст",
+                                    stringResource(R.string.cases_list_empty),
                                     color = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.padding(16.dp)
                                 )

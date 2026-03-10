@@ -2,8 +2,8 @@ package com.chumakov123.casedocket.presentation.screens
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Drafts
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,14 +38,17 @@ fun MainScreen(
                 title = {
                     Text(
                         when (selectedTab) {
-                            0 -> stringResource(R.string.drafts)
-                            else -> stringResource(R.string.confirmed)
+                            0 -> stringResource(R.string.recognition)
+                            else -> stringResource(R.string.court_cases)
                         }
                     )
                 },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.settings)
+                        )
                     }
                 }
             )
@@ -55,14 +58,14 @@ fun MainScreen(
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { viewModel.selectTab(0) },
-                    icon = { Icon(Icons.Default.Drafts, contentDescription = null) },
-                    label = { Text(stringResource(R.string.drafts)) }
+                    icon = { Icon(Icons.Default.DocumentScanner, contentDescription = null) },
+                    label = { Text(stringResource(R.string.recognition)) }
                 )
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = { viewModel.selectTab(1) },
-                    icon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
-                    label = { Text(stringResource(R.string.confirmed)) }
+                    icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
+                    label = { Text(stringResource(R.string.court_cases)) }
                 )
             }
         }
