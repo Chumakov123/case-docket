@@ -8,7 +8,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,11 +32,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,6 +51,7 @@ import androidx.core.content.ContextCompat
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
+import com.chumakov123.casedocket.presentation.screens.components.EmptyState
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.util.CameraHelper
 import com.chumakov123.casedocket.util.ErrorMessage
@@ -111,7 +109,7 @@ fun DraftListScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     val errorText = errorMessage?.toDisplayString()
 
     LaunchedEffect(errorText) {
@@ -121,66 +119,24 @@ fun DraftListScreen(
         }
     }
 
-    Scaffold(
-        modifier = modifier,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.recognition)) }
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        if (taskGroups.pendingProcessing.isEmpty() &&
+            taskGroups.completed.isEmpty() &&
+            taskGroups.failed.isEmpty()
+        ) {
+            EmptyState(
+                message = stringResource(R.string.no_images_message),
+                modifier = Modifier.align(Alignment.Center)
             )
-        },
-        floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                if (hasCamera) {
-                    FloatingActionButton(
-                        onClick = {
-                            val permission = Manifest.permission.CAMERA
-                            if (ContextCompat.checkSelfPermission(
-                                    context,
-                                    permission
-                                ) == PackageManager.PERMISSION_GRANTED
-                            ) {
-                                val photoFile = CameraHelper.createImageFile(context)
-                                val uri = CameraHelper.getUriForFile(context, photoFile)
-                                tempCameraUri = uri
-                                launchCamera(uri)
-                            } else {
-                                tempCameraUri = null
-                                permissionLauncher.launch(permission)
-                            }
-                        },
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ) {
-                        Icon(
-                            Icons.Default.CameraAlt,
-                            contentDescription = stringResource(R.string.take_photo)
-                        )
-                    }
-                }
-
-                FloatingActionButton(
-                    onClick = { galleryLauncher.launch("image/*") },
-                    containerColor = MaterialTheme.colorScheme.secondary
-                ) {
-                    Icon(
-                        Icons.Default.PhotoLibrary,
-                        contentDescription = stringResource(R.string.choose_from_gallery)
-                    )
-                }
-            }
-        }
-    ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 80.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (taskGroups.pendingProcessing.isNotEmpty()) {
                     item {
@@ -224,25 +180,65 @@ fun DraftListScreen(
                         )
                     }
                 }
+            }
+        }
 
-                if (taskGroups.pendingProcessing.isEmpty() &&
-                    taskGroups.completed.isEmpty() &&
-                    taskGroups.failed.isEmpty()
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(48.dp)
+            )
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 88.dp)
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (hasCamera) {
+                FloatingActionButton(
+                    onClick = {
+                        val permission = Manifest.permission.CAMERA
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                permission
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            val photoFile = CameraHelper.createImageFile(context)
+                            val uri = CameraHelper.getUriForFile(context, photoFile)
+                            tempCameraUri = uri
+                            launchCamera(uri)
+                        } else {
+                            tempCameraUri = null
+                            permissionLauncher.launch(permission)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
                 ) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.no_images_message),
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
+                    Icon(
+                        Icons.Default.CameraAlt,
+                        contentDescription = stringResource(R.string.take_photo)
+                    )
                 }
             }
 
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(48.dp)
+            FloatingActionButton(
+                onClick = { galleryLauncher.launch("image/*") },
+                containerColor = MaterialTheme.colorScheme.secondary
+            ) {
+                Icon(
+                    Icons.Default.PhotoLibrary,
+                    contentDescription = stringResource(R.string.choose_from_gallery)
                 )
             }
         }
