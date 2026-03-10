@@ -97,4 +97,6 @@
     <string name="photo_read_failed">Не удалось прочитать фото</string>
     <string name="photo_processing_error">Ошибка при обработке фото: %s</string>
     <string name="camera_permission_required">Необходимо разрешение на использование камеры</string>
+    <string name="delete_confirmation_title">Удалить расписание?</string>
+    <string name="delete_confirmation_message">Это действие нельзя будет отменить.</string>
 </resources>

@@ -100,4 +100,6 @@
     <string name="photo_read_failed">Failed to read photo</string>
     <string name="photo_processing_error">Photo processing error: %s</string>
     <string name="camera_permission_required">Camera permission is required</string>
+    <string name="delete_confirmation_title">Delete schedule?</string>
+    <string name="delete_confirmation_message">This action cannot be undone.</string>
 </resources>
