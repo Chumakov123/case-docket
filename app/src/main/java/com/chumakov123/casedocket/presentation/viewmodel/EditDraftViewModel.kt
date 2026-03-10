@@ -12,6 +12,7 @@ import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.model.court.toCaseTimeOrNull
 import com.chumakov123.casedocket.domain.model.court.toDraft
 import com.chumakov123.casedocket.domain.model.validation.DraftValidation
+import com.chumakov123.casedocket.domain.usecase.confirmed.DeleteConfirmedScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.ConfirmDraftUseCase
@@ -47,6 +48,7 @@ class EditDraftViewModel(
     private val rejectDraftUseCase: RejectDraftUseCase,
     private val getConfirmedScheduleUseCase: GetConfirmedScheduleByIdUseCase,
     private val updateConfirmedScheduleUseCase: UpdateConfirmedScheduleUseCase,
+    private val deleteConfirmedScheduleUseCase: DeleteConfirmedScheduleUseCase,
     private val scheduleValidator: ScheduleValidator,
 ) : ViewModel() {
 
@@ -239,8 +241,18 @@ class EditDraftViewModel(
         }
     }
 
-    fun cancelConfirmed(onComplete: () -> Unit) {
-        onComplete()
+    fun deleteConfirmed(onComplete: () -> Unit) {
+        val mode = _mode.value as? EditMode.Confirmed ?: return
+        viewModelScope.launch {
+            try {
+                deleteConfirmedScheduleUseCase(mode.scheduleId)
+                onComplete()
+            } catch (e: Exception) {
+                _state.value = EditDraftState.Error(
+                    ErrorMessage.DeletionError(e.message ?: "")
+                )
+            }
+        }
     }
 }
 

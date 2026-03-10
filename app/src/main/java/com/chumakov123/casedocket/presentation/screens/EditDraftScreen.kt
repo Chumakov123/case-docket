@@ -125,7 +125,9 @@ fun EditDraftScreen(
 
                         is EditMode.Confirmed -> {
                             SmallFloatingActionButton(
-                                onClick = { viewModel.cancelConfirmed(onNavigateBack) },
+                                onClick = {
+                                    showDeleteConfirmationDialog = true
+                                },
                                 containerColor = MaterialTheme.colorScheme.errorContainer
                             ) {
                                 Icon(
@@ -241,7 +243,7 @@ fun EditDraftScreen(
                         showDeleteConfirmationDialog = false
                         when (mode) {
                             is EditMode.Draft -> viewModel.rejectDraft(onNavigateBack)
-                            is EditMode.Confirmed -> viewModel.cancelConfirmed(onNavigateBack)
+                            is EditMode.Confirmed -> viewModel.deleteConfirmed(onNavigateBack)
                             null -> {}
                         }
                     },

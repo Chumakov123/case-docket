@@ -94,6 +94,7 @@
     <string name="loading_error">Loading error: %s</string>
     <string name="confirmation_error">Confirmation error: %s</string>
     <string name="rejection_error">Rejection error: %s</string>
+    <string name="deletion_error">Deletion error</string>
     <string name="save_error">Save error: %s</string>
     <string name="upload_summary">Uploaded: %d, errors: %d</string>
     <string name="photo_save_failed">Failed to save photo</string>

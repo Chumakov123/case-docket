@@ -91,6 +91,7 @@
     <string name="loading_error">Ошибка загрузки: %s</string>
     <string name="confirmation_error">Ошибка подтверждения: %s</string>
     <string name="rejection_error">Ошибка отклонения: %s</string>
+    <string name="deletion_error">Не удалось удалить расписание</string>
     <string name="save_error">Ошибка сохранения: %s</string>
     <string name="upload_summary">Загружено: %d, ошибок: %d</string>
     <string name="photo_save_failed">Не удалось сохранить фото</string>

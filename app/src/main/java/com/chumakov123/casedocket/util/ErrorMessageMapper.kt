@@ -12,6 +12,7 @@ fun ErrorMessage.toDisplayString(): String {
         is ErrorMessage.LoadingError -> stringResource(R.string.loading_error, details)
         is ErrorMessage.ConfirmationError -> stringResource(R.string.confirmation_error, details)
         is ErrorMessage.RejectionError -> stringResource(R.string.rejection_error, details)
+        is ErrorMessage.DeletionError -> stringResource(R.string.deletion_error, details)
         is ErrorMessage.SaveError -> stringResource(R.string.save_error, details)
         is ErrorMessage.UploadSummary -> stringResource(R.string.upload_summary, success, errors)
         is ErrorMessage.PhotoSaveFailed -> stringResource(R.string.photo_save_failed)

@@ -29,6 +29,7 @@ import com.chumakov123.casedocket.domain.service.RecognitionServiceController
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.GetSettingsUseCase
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.DeleteConfirmedScheduleUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedSchedulesUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
@@ -84,6 +85,12 @@ val domainModule = module {
             repository = get(), rescheduleNotificationsUseCase = get()
         )
     }
+    factory {
+        DeleteConfirmedScheduleUseCase(
+            repository = get(),
+            rescheduleNotificationsUseCase = get()
+        )
+    }
 
     factory { GetSettingsUseCase(repository = get()) }
     factory {
@@ -122,6 +129,7 @@ val appModule = module {
             rejectDraftUseCase = get(),
             getConfirmedScheduleUseCase = get(),
             updateConfirmedScheduleUseCase = get(),
+            deleteConfirmedScheduleUseCase = get(),
             scheduleValidator = get()
         )
     }
