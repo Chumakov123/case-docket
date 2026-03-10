@@ -41,7 +41,7 @@
     <string name="notification_timing">Уведомлять за</string>
     <string name="notification_off">Не уведомлять</string>
     <string name="notification_minutes">%d минут</string>
-    <string name="no_confirmed_schedules">Нет подтверждённых расписаний</string>
+    <string name="no_actual_schedule">Нет актуальных судебных дел</string>
     <string name="cases_count">Дел: %d</string>
     <string name="edit_schedule">Редактировать расписание</string>
     <string name="show_past">Показать прошедшие</string>

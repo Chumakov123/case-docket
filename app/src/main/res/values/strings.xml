@@ -50,7 +50,7 @@
     <string name="notification_summary">Tap to view</string>
     <string name="recognition">Recognition</string>
     <string name="court_cases">Court cases</string>
-    <string name="no_confirmed_schedules">No confirmed schedules</string>
+    <string name="no_actual_schedule">No actual schedule</string>
     <string name="cases_count">Cases: %d</string>
     <string name="edit_schedule">Edit schedule</string>
     <string name="show_past">Show past</string>

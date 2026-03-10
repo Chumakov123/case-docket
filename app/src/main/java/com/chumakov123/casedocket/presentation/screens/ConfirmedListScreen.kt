@@ -40,6 +40,7 @@ import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
 import com.chumakov123.casedocket.domain.model.court.toHHMM
+import com.chumakov123.casedocket.presentation.screens.components.EmptyState
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListItem
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -68,69 +69,83 @@ fun ConfirmedListScreen(
         }
     }
 
-    if (activeItems.isEmpty() && archivedItems.isEmpty()) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.no_confirmed_schedules),
-                style = MaterialTheme.typography.bodyLarge
-            )
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        if (hasArchived) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                ArchiveButton(
+                    showArchived = showArchived,
+                    onClick = { viewModel.toggleShowArchived() }
+                )
+            }
         }
-    } else {
-        LazyColumn(
-            modifier = modifier,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            if (hasArchived) {
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    )
-                    {
-                        ArchiveButton(
-                            showArchived = showArchived,
-                            onClick = { viewModel.toggleShowArchived() },
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                        )
-                    }
 
+        when {
+            activeItems.isEmpty() && archivedItems.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EmptyState(message = stringResource(R.string.no_actual_schedule))
                 }
             }
 
-            if (showArchived) {
-                items(archivedItems) { item ->
-                    when (item) {
-                        is ConfirmedListItem.Header -> ScheduleHeaderItem(
-                            schedule = item.schedule,
-                            onEditClick = { onEditClick(item.schedule.id) }
-                        )
-
-                        is ConfirmedListItem.Case -> CaseItem(
-                            case = item.case,
-                            isPast = item.isPast,
-                            modifier = Modifier.padding(start = 16.dp)
-                        )
-                    }
+            activeItems.isEmpty() && !showArchived -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    EmptyState(message = stringResource(R.string.no_actual_schedule))
                 }
             }
 
-            items(activeItems) { item ->
-                when (item) {
-                    is ConfirmedListItem.Header -> ScheduleHeaderItem(
-                        schedule = item.schedule,
-                        onEditClick = { onEditClick(item.schedule.id) }
-                    )
+            else -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    if (showArchived) {
+                        items(archivedItems) { item ->
+                            when (item) {
+                                is ConfirmedListItem.Header -> ScheduleHeaderItem(
+                                    schedule = item.schedule,
+                                    onEditClick = { onEditClick(item.schedule.id) }
+                                )
 
-                    is ConfirmedListItem.Case -> CaseItem(
-                        case = item.case,
-                        isPast = item.isPast,
-                        modifier = Modifier.padding(start = 16.dp)
-                    )
+                                is ConfirmedListItem.Case -> CaseItem(
+                                    case = item.case,
+                                    isPast = item.isPast
+                                )
+                            }
+                        }
+                    }
+
+                    items(activeItems) { item ->
+                        when (item) {
+                            is ConfirmedListItem.Header -> ScheduleHeaderItem(
+                                schedule = item.schedule,
+                                onEditClick = { onEditClick(item.schedule.id) }
+                            )
+
+                            is ConfirmedListItem.Case -> CaseItem(
+                                case = item.case,
+                                isPast = item.isPast
+                            )
+                        }
+                    }
                 }
             }
         }
