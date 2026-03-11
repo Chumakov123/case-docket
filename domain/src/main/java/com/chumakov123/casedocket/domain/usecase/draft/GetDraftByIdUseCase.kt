@@ -7,6 +7,6 @@ class GetDraftByIdUseCase(
     private val repository: RecognitionTaskRepository
 ) {
     suspend operator fun invoke(taskId: Long): CourtScheduleDraft? {
-        return repository.getDraftByTaskId(taskId)
+        return repository.getTaskById(taskId)?.resultDraft
     }
 }

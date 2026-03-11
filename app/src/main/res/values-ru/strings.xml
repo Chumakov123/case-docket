@@ -8,9 +8,9 @@
     <string name="new_test_recognition">Новое тестовое распознавание</string>
     <string name="schedule_title">Расписание судебных дел</string>
     <string name="schedule_instruction">Проверьте и при необходимости исправьте распознанные данные</string>
-    <string name="date_label">Дата</string>
+    <string name="date">Дата</string>
     <string name="date_placeholder">Дата не указана</string>
-    <string name="judge_label">Судья</string>
+    <string name="judge">Судья</string>
     <string name="judge_placeholder">Имя судьи не указано</string>
     <string name="total_cases">Всего дел: %d</string>
     <string name="processing">Распознавание…</string>

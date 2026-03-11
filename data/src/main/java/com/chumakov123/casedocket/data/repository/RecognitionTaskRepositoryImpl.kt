@@ -1,18 +1,14 @@
 package com.chumakov123.casedocket.data.repository
 
-import com.chumakov123.casedocket.data.dto.CourtScheduleDraftDto
 import com.chumakov123.casedocket.data.local.dao.RecognitionTaskDao
 import com.chumakov123.casedocket.data.local.entity.RecognitionTaskEntity
 import com.chumakov123.casedocket.data.mapper.toDomain
-import com.chumakov123.casedocket.data.mapper.toDto
 import com.chumakov123.casedocket.data.mapper.toEntity
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
-import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 class RecognitionTaskRepositoryImpl(
@@ -20,7 +16,7 @@ class RecognitionTaskRepositoryImpl(
     private val json: Json
 ) : RecognitionTaskRepository {
     override fun observeTasks(): Flow<List<RecognitionTask>> =
-        dao.observeAll().map { entities -> entities.map { it.toDomain() } }
+        dao.observeAll().map { entities -> entities.map { it.toDomain(json) } }
 
     override suspend fun addTask(imageUri: String): Long {
         val entity = RecognitionTaskEntity(
@@ -35,11 +31,11 @@ class RecognitionTaskRepositoryImpl(
     }
 
     override suspend fun updateTask(task: RecognitionTask) {
-        dao.update(task.toEntity())
+        dao.update(task.toEntity(json = json))
     }
 
     override suspend fun getNextPendingTask(): RecognitionTask? {
-        return dao.getNextPending()?.toDomain()
+        return dao.getNextPending()?.toDomain(json = json)
     }
 
     override suspend fun getPendingCount(): Int = dao.getPendingCount()
@@ -49,22 +45,7 @@ class RecognitionTaskRepositoryImpl(
         if (entity != null) dao.delete(entity)
     }
 
-    override suspend fun getDraftByTaskId(taskId: Long): CourtScheduleDraft? {
-        val entity = dao.getById(taskId) ?: return null
-        val jsonString = entity.resultDraftJson ?: return null
-        return try {
-            val dto = json.decodeFromString<CourtScheduleDraftDto>(jsonString)
-            dto.toDomain()
-        } catch (e: SerializationException) {
-            null
-        }
-    }
-
-    override suspend fun updateDraft(taskId: Long, draft: CourtScheduleDraft) {
-        val entity = dao.getById(taskId) ?: return
-        val dto = draft.toDto()
-        val jsonString = json.encodeToString(dto)
-        val updatedEntity = entity.copy(resultDraftJson = jsonString)
-        dao.update(updatedEntity)
+    override suspend fun getTaskById(id: Long): RecognitionTask? {
+        return dao.getById(id)?.toDomain(json)
     }
 }

@@ -1,5 +1,6 @@
 package com.chumakov123.casedocket.domain.model
 
+import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import java.util.Date
 
 enum class TaskStatus {
@@ -10,8 +11,8 @@ data class RecognitionTask(
     val id: Long = 0,
     val imageUri: String,
     val status: TaskStatus,
-    val resultDraftJson: String? = null,
     val errorMessage: String? = null,
     val createdAt: Date = Date(),
-    val completedAt: Date? = null
+    val completedAt: Date? = null,
+    val resultDraft: CourtScheduleDraft? = null
 )

@@ -43,7 +43,7 @@ fun ScheduleHeader(
     judgeError: Boolean,
     onDateChange: (ScheduleDate) -> Unit,
     onJudgeChange: (String) -> Unit
-){
+) {
     var judgeText by remember { mutableStateOf(schedule.judge.text) }
     val casesCount = schedule.cases.size
 
@@ -94,7 +94,7 @@ fun ScheduleHeader(
                     judgeText = it
                     onJudgeChange(it)
                 },
-                label = { Text(stringResource(R.string.judge_label)) },
+                label = { Text(stringResource(R.string.judge)) },
                 placeholder = { Text(stringResource(R.string.judge_placeholder)) },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 singleLine = true,
@@ -151,7 +151,7 @@ private fun ScheduleDatePickerField(
     Column(modifier = modifier) {
         // Подпись поля
         Text(
-            text = stringResource(R.string.date_label),
+            text = stringResource(R.string.date),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)

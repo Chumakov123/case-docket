@@ -7,6 +7,8 @@ class UpdateDraftUseCase(
     private val repository: RecognitionTaskRepository
 ) {
     suspend operator fun invoke(taskId: Long, draft: CourtScheduleDraft) {
-        repository.updateDraft(taskId, draft)
+        val task = repository.getTaskById(taskId) ?: return
+        val updatedTask = task.copy(resultDraft = draft)
+        repository.updateTask(updatedTask)
     }
 }

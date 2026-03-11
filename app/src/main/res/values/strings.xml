@@ -9,9 +9,9 @@
     <string name="new_test_recognition">New test recognition</string>
     <string name="schedule_title">Court Schedule</string>
     <string name="schedule_instruction">Check and correct recognized data if necessary</string>
-    <string name="date_label">Date</string>
+    <string name="date">Date</string>
     <string name="date_placeholder">Date not specified</string>
-    <string name="judge_label">Judge</string>
+    <string name="judge">Judge</string>
     <string name="judge_placeholder">Judge\'s name not specified</string>
     <string name="total_cases">Total cases: %d</string>
     <string name="processing">Processing…</string>

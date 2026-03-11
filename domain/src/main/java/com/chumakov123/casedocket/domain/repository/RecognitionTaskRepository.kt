@@ -1,7 +1,6 @@
 package com.chumakov123.casedocket.domain.repository
 
 import com.chumakov123.casedocket.domain.model.RecognitionTask
-import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import kotlinx.coroutines.flow.Flow
 
 interface RecognitionTaskRepository {
@@ -11,6 +10,5 @@ interface RecognitionTaskRepository {
     suspend fun getNextPendingTask(): RecognitionTask?
     suspend fun getPendingCount(): Int
     suspend fun deleteTask(id: Long)
-    suspend fun getDraftByTaskId(taskId: Long): CourtScheduleDraft?
-    suspend fun updateDraft(taskId: Long, draft: CourtScheduleDraft)
+    suspend fun getTaskById(id: Long): RecognitionTask?
 }

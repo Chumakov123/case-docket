@@ -16,13 +16,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
@@ -46,6 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -316,17 +322,46 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(stringResource(R.string.image_number, task.id))
                 Text(
                     text = stringResource(R.string.uploaded_label, formatDate(task.createdAt)),
                     style = MaterialTheme.typography.bodySmall
                 )
-                Text(
-                    text = stringResource(R.string.recognized_label),
-                    style = MaterialTheme.typography.bodySmall
-                )
+
+                task.resultDraft?.let { draft ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        if (draft.judge.text.isNotBlank()) {
+                            IconWithText(
+                                icon = Icons.Default.Person,
+                                text = draft.judge.text,
+                                color = MaterialTheme.colorScheme.primary,
+                                contentDescription = stringResource(R.string.judge)
+                            )
+                        }
+                        draft.date?.let { date ->
+                            IconWithText(
+                                icon = Icons.Default.CalendarToday,
+                                text = date.toDisplayFormat(),
+                                contentDescription = stringResource(R.string.date)
+                            )
+                        }
+                        if (draft.cases.isNotEmpty()) {
+                            IconWithText(
+                                icon = Icons.AutoMirrored.Filled.List,
+                                text = draft.cases.size.toString(),
+                                contentDescription = stringResource(R.string.cases_count)
+                            )
+                        }
+                    }
+                }
             }
+
             IconButton(onClick = onEditClick) {
                 Icon(
                     Icons.Default.Edit,
@@ -375,6 +410,33 @@ fun FailedTaskItem(task: RecognitionTask, onRetryClick: () -> Unit, onDeleteClic
                 }
             }
         }
+    }
+}
+
+@Composable
+fun IconWithText(
+    icon: ImageVector,
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurface,
+    contentDescription: String?
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            modifier = Modifier.size(16.dp),
+            tint = color
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color
+        )
     }
 }
 

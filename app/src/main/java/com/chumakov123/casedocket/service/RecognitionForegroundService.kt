@@ -12,8 +12,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.chumakov123.casedocket.R
-import com.chumakov123.casedocket.data.dto.CourtScheduleDraftDto
-import com.chumakov123.casedocket.data.mapper.toDto
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
 import com.chumakov123.casedocket.domain.usecase.RecognizeScheduleUseCase
@@ -25,7 +23,6 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.serialization.json.Json
 import org.koin.android.ext.android.inject
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -100,9 +97,7 @@ class RecognitionForegroundService : LifecycleService() {
             val result = withTimeout(120_000) {
                 recognizeUseCase(imageBytes)
             }
-            val dto = result.toDto()
-            val json = Json.Default.encodeToString(CourtScheduleDraftDto.serializer(), dto)
-            manager.completeTask(task.id, json)
+            manager.completeTask(task.id, result)
             processedTasksCount++
         } catch (e: TimeoutCancellationException) {
             manager.failTask(task.id, getString(R.string.error_ocr_timeout))

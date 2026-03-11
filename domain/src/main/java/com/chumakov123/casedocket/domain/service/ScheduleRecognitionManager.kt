@@ -2,6 +2,7 @@ package com.chumakov123.casedocket.domain.service
 
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
+import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -22,12 +23,12 @@ class ScheduleRecognitionManager(
         return task
     }
 
-    suspend fun completeTask(taskId: Long, resultJson: String) {
+    suspend fun completeTask(taskId: Long, draft: CourtScheduleDraft) {
         val task = findTask(taskId) ?: return
         repository.updateTask(
             task.copy(
                 status = TaskStatus.COMPLETED,
-                resultDraftJson = resultJson,
+                resultDraft = draft,
                 completedAt = Date()
             )
         )
