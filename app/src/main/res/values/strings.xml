@@ -79,7 +79,7 @@
     <string name="status_completed">Completed</string>
     <string name="status_failed">Failed</string>
     <string name="service_started">Service started</string>
-    <string name="processing_task">Processing task %d</string>
+    <string name="processing_image">Processing image %d</string>
     <string name="error_ocr_timeout">OCR timeout</string>
     <string name="error_unknown">Unknown error</string>
     <string name="notification_title_recognition">Schedule recognition</string>
@@ -103,4 +103,8 @@
     <string name="camera_permission_required">Camera permission is required</string>
     <string name="delete_confirmation_title">Delete schedule?</string>
     <string name="delete_confirmation_message">This action cannot be undone.</string>
+    <string name="delete_case">Delete case</string>
+    <string name="add_case">Add case</string>
+    <string name="delete_case_confirmation_title">Delete case?</string>
+    <string name="delete_case_confirmation_message">Are you sure you want to delete this case from the schedule?</string>
 </resources>

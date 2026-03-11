@@ -14,8 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -24,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.presentation.screens.components.AddCaseButton
 import com.chumakov123.casedocket.presentation.screens.components.CourtCaseCard
+import com.chumakov123.casedocket.presentation.screens.components.DeleteConfirmationDialog
 import com.chumakov123.casedocket.presentation.screens.components.ErrorState
 import com.chumakov123.casedocket.presentation.screens.components.LoadingState
 import com.chumakov123.casedocket.presentation.screens.components.ScheduleHeader
@@ -221,7 +220,8 @@ fun EditDraftScreen(
                                                 index,
                                                 it
                                             )
-                                        }
+                                        },
+                                        onDelete = { viewModel.deleteCase(index) }
                                     )
                                 }
                                 if (validation.casesError) {
@@ -233,6 +233,9 @@ fun EditDraftScreen(
                                         )
                                     }
                                 }
+                                item {
+                                    AddCaseButton(onClick = { viewModel.addCase() })
+                                }
                             }
                         }
                     }
@@ -241,59 +244,16 @@ fun EditDraftScreen(
         }
     }
 
-    if (showDeleteConfirmationDialog) {
-        AlertDialog(
-            icon = {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error
-                )
-            },
-            title = {
-                Text(
-                    text = stringResource(R.string.delete_confirmation_title),
-                    color = MaterialTheme.colorScheme.error
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.delete_confirmation_message)
-                )
-            },
-            onDismissRequest = {
-                showDeleteConfirmationDialog = false
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteConfirmationDialog = false
-                        when (mode) {
-                            is EditMode.Draft -> viewModel.rejectDraft(onNavigateBack)
-                            is EditMode.Confirmed -> viewModel.deleteConfirmed(onNavigateBack)
-                            null -> {}
-                        }
-                    },
-                    content = {
-                        Text(
-                            stringResource(R.string.delete),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                )
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteConfirmationDialog = false
-                    }
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-            textContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    DeleteConfirmationDialog(
+        showDialog = showDeleteConfirmationDialog,
+        onDismiss = { showDeleteConfirmationDialog = false },
+        onConfirm = {
+            showDeleteConfirmationDialog = false
+            when (mode) {
+                is EditMode.Draft -> viewModel.rejectDraft(onNavigateBack)
+                is EditMode.Confirmed -> viewModel.deleteConfirmed(onNavigateBack)
+                null -> {}
+            }
+        }
+    )
 }

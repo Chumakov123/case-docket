@@ -1,13 +1,19 @@
 package com.chumakov123.casedocket.presentation.screens.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -30,7 +36,8 @@ fun CourtCaseCard(
     validation: CaseValidation,
     onCaseNumberChange: (String) -> Unit,
     onTimeChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit
+    onDescriptionChange: (String) -> Unit,
+    onDelete: () -> Unit
 ) {
     val caseNumber by remember(courtCaseDraft) {
         derivedStateOf { courtCaseDraft.caseNumber ?: "" }
@@ -46,13 +53,17 @@ fun CourtCaseCard(
     var editTime by remember { mutableStateOf(false) }
     var editDescription by remember { mutableStateOf(false) }
 
+    var showDeleteCaseDialog by remember { mutableStateOf(false) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(Modifier.padding(14.dp)) {
-
-            Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
                 EditableTextBlock(
                     value = caseNumber,
                     placeholder = stringResource(R.string.case_number_placeholder),
@@ -61,20 +72,33 @@ fun CourtCaseCard(
                     minLines = 1,
                     maxLines = 2,
                     isError = validation.caseNumberError,
-                    modifier = Modifier
-                        .fillMaxWidth(0.55f)
-                        .align(Alignment.TopStart)
+                    modifier = Modifier.weight(1f)
                 ) {
                     editNumber = true
                 }
 
-                EditableTimeBlock(
-                    time = time,
-                    placeholder = stringResource(R.string.time_placeholder),
-                    isError = validation.timeError,
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {
-                    editTime = true
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    EditableTimeBlock(
+                        time = time,
+                        placeholder = stringResource(R.string.time_placeholder),
+                        isError = validation.timeError,
+                        modifier = Modifier
+                    ) {
+                        editTime = true
+                    }
+
+                    IconButton(
+                        onClick = { showDeleteCaseDialog = true },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.DeleteOutline,
+                            contentDescription = stringResource(R.string.delete_case),
+                            tint = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
 
@@ -129,4 +153,15 @@ fun CourtCaseCard(
             }
         )
     }
+
+    DeleteConfirmationDialog(
+        showDialog = showDeleteCaseDialog,
+        onDismiss = { showDeleteCaseDialog = false },
+        onConfirm = {
+            showDeleteCaseDialog = false
+            onDelete()
+        },
+        title = stringResource(R.string.delete_case_confirmation_title),
+        message = stringResource(R.string.delete_case_confirmation_message)
+    )
 }

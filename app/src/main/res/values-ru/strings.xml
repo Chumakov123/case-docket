@@ -76,7 +76,7 @@
     <string name="status_completed">Обработано</string>
     <string name="status_failed">Ошибка</string>
     <string name="service_started">Сервис запущен</string>
-    <string name="processing_task">Обработка задачи %d</string>
+    <string name="processing_image">Обработка изображения %d</string>
     <string name="error_ocr_timeout">Таймаут OCR</string>
     <string name="error_unknown">Неизвестная ошибка</string>
     <string name="notification_title_recognition">Распознавание расписания</string>
@@ -100,4 +100,8 @@
     <string name="camera_permission_required">Необходимо разрешение на использование камеры</string>
     <string name="delete_confirmation_title">Удалить расписание?</string>
     <string name="delete_confirmation_message">Это действие нельзя будет отменить.</string>
+    <string name="delete_case">Удалить дело</string>
+    <string name="add_case">Добавить дело</string>
+    <string name="delete_case_confirmation_title">Удалить дело?</string>
+    <string name="delete_case_confirmation_message">Вы уверены, что хотите удалить это дело из расписания?</string>
 </resources>

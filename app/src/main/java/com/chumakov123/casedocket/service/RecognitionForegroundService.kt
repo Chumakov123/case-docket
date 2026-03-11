@@ -94,7 +94,7 @@ class RecognitionForegroundService : LifecycleService() {
     }
 
     private suspend fun processTask(task: RecognitionTask) {
-        updateNotification(getString(R.string.processing_task, task.id))
+        updateNotification(getString(R.string.processing_image, task.id))
         try {
             val imageBytes = loadImageBytes(task.imageUri)
             val result = withTimeout(120_000) {

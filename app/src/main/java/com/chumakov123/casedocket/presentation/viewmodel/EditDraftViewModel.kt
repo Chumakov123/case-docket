@@ -254,6 +254,32 @@ class EditDraftViewModel(
             }
         }
     }
+
+    fun addCase() {
+        _currentDraft.update { draft ->
+            draft?.let {
+                val newCase = CourtCaseDraft(
+                    caseNumber = null,
+                    time = null,
+                    description = CourtCaseDescription("")
+                )
+                it.copy(cases = it.cases + newCase)
+            }
+        }
+    }
+
+    fun deleteCase(index: Int) {
+        _currentDraft.update { draft ->
+            draft?.let {
+                if (index in it.cases.indices) {
+                    val updatedCases = it.cases.toMutableList().apply { removeAt(index) }
+                    it.copy(cases = updatedCases)
+                } else {
+                    it
+                }
+            }
+        }
+    }
 }
 
 fun CourtScheduleDraft.toCourtSchedule(): CourtSchedule = CourtSchedule(
