@@ -1,6 +1,7 @@
 package com.chumakov123.casedocket.presentation.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -43,6 +45,8 @@ import com.chumakov123.casedocket.presentation.viewmodel.EditDraftState
 import com.chumakov123.casedocket.presentation.viewmodel.EditDraftViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.EditMode
 import com.chumakov123.casedocket.util.toDisplayString
+import my.nanihadesuka.compose.LazyColumnScrollbar
+import my.nanihadesuka.compose.ScrollbarSettings
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +63,8 @@ fun EditDraftScreen(
     val mode by viewModel.mode.collectAsState()
 
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
+
+    val listState = rememberLazyListState()
 
     LaunchedEffect(taskId, confirmedId) {
         when {
@@ -173,39 +179,60 @@ fun EditDraftScreen(
 
             is EditDraftState.Success -> {
                 if (currentDraft != null) {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
-                            .padding(horizontal = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(bottom = 16.dp)
-                    ) {
-                        item {
-                            ScheduleHeader(
-                                schedule = currentDraft!!,
-                                dateError = validation.dateError,
-                                judgeError = validation.judgeError,
-                                onDateChange = { viewModel.updateDate(it) },
-                                onJudgeChange = { viewModel.updateJudge(it) }
+                    Box(modifier = Modifier.padding(paddingValues)) {
+                        LazyColumnScrollbar(
+                            state = listState,
+                            settings = ScrollbarSettings.Default.copy(
+                                thumbUnselectedColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                                thumbSelectedColor = MaterialTheme.colorScheme.primary,
+                                scrollbarPadding = 2.dp
                             )
-                        }
-                        items(currentDraft!!.cases.indices.toList()) { index ->
-                            CourtCaseCard(
-                                courtCaseDraft = currentDraft!!.cases[index],
-                                validation = validation.casesValidations[index],
-                                onCaseNumberChange = { viewModel.updateCaseNumber(index, it) },
-                                onTimeChange = { viewModel.updateCaseTime(index, it) },
-                                onDescriptionChange = { viewModel.updateCaseDescription(index, it) }
-                            )
-                        }
-                        if (validation.casesError) {
-                            item {
-                                Text(
-                                    stringResource(R.string.cases_list_empty),
-                                    color = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.padding(16.dp)
-                                )
+                        ) {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(bottom = 80.dp)
+                            ) {
+                                item {
+                                    ScheduleHeader(
+                                        schedule = currentDraft!!,
+                                        dateError = validation.dateError,
+                                        judgeError = validation.judgeError,
+                                        onDateChange = { viewModel.updateDate(it) },
+                                        onJudgeChange = { viewModel.updateJudge(it) }
+                                    )
+                                }
+                                items(currentDraft!!.cases.indices.toList()) { index ->
+                                    CourtCaseCard(
+                                        courtCaseDraft = currentDraft!!.cases[index],
+                                        validation = validation.casesValidations[index],
+                                        onCaseNumberChange = {
+                                            viewModel.updateCaseNumber(
+                                                index,
+                                                it
+                                            )
+                                        },
+                                        onTimeChange = { viewModel.updateCaseTime(index, it) },
+                                        onDescriptionChange = {
+                                            viewModel.updateCaseDescription(
+                                                index,
+                                                it
+                                            )
+                                        }
+                                    )
+                                }
+                                if (validation.casesError) {
+                                    item {
+                                        Text(
+                                            stringResource(R.string.cases_list_empty),
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.padding(16.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

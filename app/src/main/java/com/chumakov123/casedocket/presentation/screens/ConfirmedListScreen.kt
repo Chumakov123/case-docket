@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
@@ -31,6 +32,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -43,6 +45,8 @@ import com.chumakov123.casedocket.domain.model.court.toHHMM
 import com.chumakov123.casedocket.presentation.screens.components.EmptyState
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListItem
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
+import my.nanihadesuka.compose.LazyColumnScrollbar
+import my.nanihadesuka.compose.ScrollbarSettings
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -56,6 +60,8 @@ fun ConfirmedListScreen(
     val hasArchived by viewModel.hasArchived.collectAsState()
     val showArchived by viewModel.showArchived.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    val listState = rememberLazyListState()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -110,15 +116,39 @@ fun ConfirmedListScreen(
             }
 
             else -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                LazyColumnScrollbar(
+                    state = listState,
+                    settings = ScrollbarSettings.Default.copy(
+                        thumbUnselectedColor = Color.Gray.copy(alpha = 0.5f),
+                        thumbSelectedColor = MaterialTheme.colorScheme.primary,
+                        scrollbarPadding = 4.dp
+                    )
                 ) {
-                    if (showArchived) {
-                        items(archivedItems) { item ->
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        if (showArchived) {
+                            items(archivedItems) { item ->
+                                when (item) {
+                                    is ConfirmedListItem.Header -> ScheduleHeaderItem(
+                                        schedule = item.schedule,
+                                        onEditClick = { onEditClick(item.schedule.id) }
+                                    )
+
+                                    is ConfirmedListItem.Case -> CaseItem(
+                                        case = item.case,
+                                        isPast = item.isPast
+                                    )
+                                }
+                            }
+                        }
+
+                        items(activeItems) { item ->
                             when (item) {
                                 is ConfirmedListItem.Header -> ScheduleHeaderItem(
                                     schedule = item.schedule,
@@ -132,22 +162,9 @@ fun ConfirmedListScreen(
                             }
                         }
                     }
-
-                    items(activeItems) { item ->
-                        when (item) {
-                            is ConfirmedListItem.Header -> ScheduleHeaderItem(
-                                schedule = item.schedule,
-                                onEditClick = { onEditClick(item.schedule.id) }
-                            )
-
-                            is ConfirmedListItem.Case -> CaseItem(
-                                case = item.case,
-                                isPast = item.isPast
-                            )
-                        }
-                    }
                 }
             }
+
         }
     }
 }
