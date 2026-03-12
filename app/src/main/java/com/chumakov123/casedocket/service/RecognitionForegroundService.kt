@@ -33,6 +33,7 @@ class RecognitionForegroundService : LifecycleService() {
     private val recognizeUseCase: RecognizeScheduleUseCase by inject()
     private var processingJob: Job? = null
     private var processedTasksCount = 0
+    private var isTaskCurrentlyProcessing = false
 
     private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 
@@ -91,6 +92,7 @@ class RecognitionForegroundService : LifecycleService() {
     }
 
     private suspend fun processTask(task: RecognitionTask) {
+        isTaskCurrentlyProcessing = true
         updateNotification(getString(R.string.processing_image, task.id))
         try {
             val imageBytes = loadImageBytes(task.imageUri)
@@ -105,11 +107,14 @@ class RecognitionForegroundService : LifecycleService() {
         } catch (e: Exception) {
             manager.failTask(task.id, e.message ?: getString(R.string.error_unknown))
             processedTasksCount++
+        } finally {
+            isTaskCurrentlyProcessing = false
         }
     }
 
     private suspend fun stopIfQueueEmpty() {
-        if (!manager.hasPendingTask()) {
+        val hasPending = manager.hasPendingTask()
+        if (!hasPending && !isTaskCurrentlyProcessing) {
             processingJob?.cancel()
             stopSelf()
         }
