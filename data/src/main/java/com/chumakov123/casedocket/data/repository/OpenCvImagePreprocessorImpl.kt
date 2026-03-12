@@ -2,6 +2,7 @@ package com.chumakov123.casedocket.data.repository
 
 import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
 import com.chumakov123.casedocket.domain.repository.ImageSaver
+import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.core.MatOfByte
@@ -19,8 +20,15 @@ import kotlin.math.min
 class OpenCvImagePreprocessorImpl(
     private val imageSaver: ImageSaver?
 ) : ImagePreprocessor {
+    private val openCVInitialized by lazy {
+        if (!OpenCVLoader.initLocal()) {
+            throw IllegalStateException("OpenCV initialization failed")
+        }
+        true
+    }
 
     override suspend fun preprocess(imageBytes: ByteArray): ByteArray {
+        openCVInitialized
         val originalMat = Imgcodecs.imdecode(MatOfByte(*imageBytes), Imgcodecs.IMREAD_COLOR)
         val croppedMat = cropDocument(originalMat)
         val processedMat = preprocessForOcr(croppedMat)

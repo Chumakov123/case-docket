@@ -4,6 +4,7 @@ import com.chumakov123.casedocket.domain.model.imaging.DocumentLayout
 import com.chumakov123.casedocket.domain.model.imaging.ImageRegion
 import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
 import com.chumakov123.casedocket.domain.repository.ImageSaver
+import org.opencv.android.OpenCVLoader
 import org.opencv.core.Core
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -24,7 +25,15 @@ class OpenCvLayoutAnalyzerImpl(
     private val imageSaver: ImageSaver?
 ) : ImageLayoutAnalyzer {
 
+    private val openCVInitialized by lazy {
+        if (!OpenCVLoader.initLocal()) {
+            throw IllegalStateException("OpenCV initialization failed")
+        }
+        true
+    }
+
     override suspend fun analyze(imageBytes: ByteArray): DocumentLayout {
+        openCVInitialized
 
         val src = Imgcodecs.imdecode(MatOfByte(*imageBytes), Imgcodecs.IMREAD_GRAYSCALE)
             ?: throw IllegalArgumentException("Cannot decode image")
@@ -155,13 +164,17 @@ class OpenCvLayoutAnalyzerImpl(
         Imgproc.cvtColor(debug, debug, Imgproc.COLOR_GRAY2BGR)
 
         finalVerts.forEach {
-            Imgproc.line(debug, Point(it.toDouble(), 0.0), Point(it.toDouble(), h.toDouble()),
-                Scalar(0.0, 255.0, 0.0), 1)
+            Imgproc.line(
+                debug, Point(it.toDouble(), 0.0), Point(it.toDouble(), h.toDouble()),
+                Scalar(0.0, 255.0, 0.0), 1
+            )
         }
 
         finalHorz.forEach {
-            Imgproc.line(debug, Point(0.0, it.toDouble()), Point(w.toDouble(), it.toDouble()),
-                Scalar(0.0, 255.0, 0.0), 1)
+            Imgproc.line(
+                debug, Point(0.0, it.toDouble()), Point(w.toDouble(), it.toDouble()),
+                Scalar(0.0, 255.0, 0.0), 1
+            )
         }
 
         return GridResult(debug, cells)
@@ -178,7 +191,13 @@ class OpenCvLayoutAnalyzerImpl(
         Imgproc.morphologyEx(inverted, opened, Imgproc.MORPH_OPEN, kernel)
 
         val contours = mutableListOf<MatOfPoint>()
-        Imgproc.findContours(opened, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        Imgproc.findContours(
+            opened,
+            contours,
+            Mat(),
+            Imgproc.RETR_EXTERNAL,
+            Imgproc.CHAIN_APPROX_SIMPLE
+        )
 
         val h = image.rows()
         return contours
@@ -197,7 +216,13 @@ class OpenCvLayoutAnalyzerImpl(
         Imgproc.morphologyEx(inverted, opened, Imgproc.MORPH_OPEN, kernel)
 
         val contours = mutableListOf<MatOfPoint>()
-        Imgproc.findContours(opened, contours, Mat(), Imgproc.RETR_EXTERNAL, Imgproc.CHAIN_APPROX_SIMPLE)
+        Imgproc.findContours(
+            opened,
+            contours,
+            Mat(),
+            Imgproc.RETR_EXTERNAL,
+            Imgproc.CHAIN_APPROX_SIMPLE
+        )
 
         val w = image.cols()
         return contours
@@ -276,7 +301,12 @@ class OpenCvLayoutAnalyzerImpl(
         )
 
         val warped = Mat()
-        Imgproc.warpPerspective(src, warped, transform, Size(maxWidth.toDouble(), maxHeight.toDouble()))
+        Imgproc.warpPerspective(
+            src,
+            warped,
+            transform,
+            Size(maxWidth.toDouble(), maxHeight.toDouble())
+        )
 
         return warped
     }

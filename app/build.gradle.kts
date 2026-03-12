@@ -56,10 +56,6 @@ dependencies {
     implementation(libs.insert.koin.koin.androidx.compose)
     implementation(libs.koin.androidx.workmanager)
 
-    //implementation("com.google.mlkit:text-recognition:16.0.1")
-    implementation(libs.tesseract4android)
-    implementation(libs.opencv)
-
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx.v2100)
 
