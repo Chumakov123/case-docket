@@ -1,9 +1,21 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+}
+
+fun getLocalProperty(key: String): String? {
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    return if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { fis ->
+            properties.load(fis)
+            properties.getProperty(key)
+        }
+    } else null
 }
 
 android {
@@ -20,15 +32,33 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+        }
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = getLocalProperty("signing.storeFile")?.let { file(it) }
+            storePassword = getLocalProperty("signing.storePassword")
+            keyAlias = getLocalProperty("signing.keyAlias")
+            keyPassword = getLocalProperty("signing.keyPassword")
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
