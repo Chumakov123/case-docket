@@ -3,6 +3,7 @@ package com.chumakov123.casedocket.util
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.domain.model.ErrorMessage
 
 @Composable
 fun ErrorMessage.toDisplayString(): String {

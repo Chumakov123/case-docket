@@ -57,12 +57,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.chumakov123.casedocket.R
+import com.chumakov123.casedocket.domain.model.ErrorMessage
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
 import com.chumakov123.casedocket.presentation.screens.components.EmptyState
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.util.CameraHelper
-import com.chumakov123.casedocket.util.ErrorMessage
 import com.chumakov123.casedocket.util.toDisplayString
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
@@ -91,7 +91,7 @@ fun DraftListScreen(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success && tempCameraUri != null) {
-            viewModel.processCapturedImage(context, tempCameraUri!!)
+            viewModel.processCapturedImage(tempCameraUri.toString())
         } else {
             tempCameraUri?.let { CameraHelper.deleteTempFile(context, it) }
         }
@@ -116,7 +116,7 @@ fun DraftListScreen(
         contract = ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
         if (uris.isNotEmpty()) {
-            viewModel.processSelectedImages(context, uris)
+            viewModel.processSelectedImages(uris.map { it.toString() })
         }
     }
 

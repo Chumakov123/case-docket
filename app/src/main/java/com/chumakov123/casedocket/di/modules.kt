@@ -9,6 +9,7 @@ import com.chumakov123.casedocket.data.local.AppDatabase
 import com.chumakov123.casedocket.data.local.dao.ConfirmedScheduleDao
 import com.chumakov123.casedocket.data.local.dao.RecognitionTaskDao
 import com.chumakov123.casedocket.data.repository.ConfirmedScheduleRepositoryImpl
+import com.chumakov123.casedocket.data.repository.ImageHandlerImpl
 import com.chumakov123.casedocket.data.repository.InternalStorageImageSaver
 import com.chumakov123.casedocket.data.repository.OpenCvImagePreprocessorImpl
 import com.chumakov123.casedocket.data.repository.OpenCvLayoutAnalyzerImpl
@@ -18,6 +19,7 @@ import com.chumakov123.casedocket.data.repository.TesseractOcrServiceImpl
 import com.chumakov123.casedocket.domain.document.DocumentInterpreter
 import com.chumakov123.casedocket.domain.document.ScheduleTableParser
 import com.chumakov123.casedocket.domain.repository.ConfirmedScheduleRepository
+import com.chumakov123.casedocket.domain.repository.ImageHandler
 import com.chumakov123.casedocket.domain.repository.ImageLayoutAnalyzer
 import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
 import com.chumakov123.casedocket.domain.repository.ImageSaver
@@ -40,6 +42,8 @@ import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.notification.RescheduleNotificationsUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSelectedTabUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSettingsUseCase
+import com.chumakov123.casedocket.domain.usecase.task.DeleteTaskUseCase
+import com.chumakov123.casedocket.domain.usecase.task.RetryTaskUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
 import com.chumakov123.casedocket.presentation.tracker.AppForegroundTracker
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
@@ -103,6 +107,14 @@ val domainModule = module {
         UpdateSelectedTabUseCase(repository = get())
     }
 
+    factory { DeleteTaskUseCase(repository = get()) }
+    factory {
+        RetryTaskUseCase(
+            manager = get(),
+            repository = get()
+        )
+    }
+
     factory {
         RecognizeScheduleUseCase(
             preprocessor = get(),
@@ -136,8 +148,9 @@ val appModule = module {
     viewModel {
         DraftListViewModel(
             manager = get(),
-            repository = get(),
-            imageSaver = get()
+            imageHandler = get(),
+            deleteTaskUseCase = get(),
+            retryTaskUseCase = get()
         )
     }
     viewModel { ConfirmedListViewModel(getConfirmedSchedulesUseCase = get()) }
@@ -174,6 +187,13 @@ val appModule = module {
 val dataModule = module {
     single { Json { ignoreUnknownKeys = true } }
 
+    single<ImageHandler> {
+        ImageHandlerImpl(
+            сontext = androidContext(),
+            imageSaver = get(),
+            manager = get()
+        )
+    }
     single<ImageSaver> { InternalStorageImageSaver(context = androidContext()) }
     single<ImagePreprocessor> { OpenCvImagePreprocessorImpl(imageSaver = null) }
     single<ImageLayoutAnalyzer> { OpenCvLayoutAnalyzerImpl(imageSaver = null) }

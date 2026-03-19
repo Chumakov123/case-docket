@@ -1,4 +1,4 @@
-package com.chumakov123.casedocket.util
+package com.chumakov123.casedocket.domain.model
 
 sealed class ErrorMessage {
     object DraftNotFound : ErrorMessage()

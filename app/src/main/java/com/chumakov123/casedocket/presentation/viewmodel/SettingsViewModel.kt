@@ -14,7 +14,6 @@ class SettingsViewModel(
     getSettingsUseCase: GetSettingsUseCase,
     private val updateSettingsUseCase: UpdateSettingsUseCase
 ) : ViewModel() {
-
     val settings: StateFlow<Settings> = getSettingsUseCase()
         .stateIn(
             scope = viewModelScope,

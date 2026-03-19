@@ -1,15 +1,14 @@
 package com.chumakov123.casedocket.presentation.viewmodel
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chumakov123.casedocket.domain.model.ErrorMessage
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
-import com.chumakov123.casedocket.domain.repository.ImageSaver
-import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
+import com.chumakov123.casedocket.domain.repository.ImageHandler
 import com.chumakov123.casedocket.domain.service.ScheduleRecognitionManager
-import com.chumakov123.casedocket.util.ErrorMessage
+import com.chumakov123.casedocket.domain.usecase.task.DeleteTaskUseCase
+import com.chumakov123.casedocket.domain.usecase.task.RetryTaskUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,8 +25,9 @@ data class TaskGroup(
 
 class DraftListViewModel(
     private val manager: ScheduleRecognitionManager,
-    private val repository: RecognitionTaskRepository,
-    private val imageSaver: ImageSaver
+    private val imageHandler: ImageHandler,
+    private val deleteTaskUseCase: DeleteTaskUseCase,
+    private val retryTaskUseCase: RetryTaskUseCase
 ) : ViewModel() {
 
     private val _tasks = MutableStateFlow<List<RecognitionTask>>(emptyList())
@@ -56,83 +56,36 @@ class DraftListViewModel(
         }
     }
 
-    fun processSelectedImages(context: Context, uris: List<Uri>) {
+    fun processSelectedImages(uriStrings: List<String>) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-            var successCount = 0
-            var errorCount = 0
-            try {
-                uris.forEach { uri ->
-                    try {
-                        val bytes =
-                            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-                        if (bytes != null) {
-                            val filename =
-                                "gallery_${System.currentTimeMillis()}_${uri.hashCode()}.jpg"
-                            val savedPath = imageSaver.save(bytes, filename)
-                            if (savedPath != null) {
-                                manager.submitImage("file://$savedPath")
-                                successCount++
-                            } else {
-                                errorCount++
-                            }
-                        } else {
-                            errorCount++
-                        }
-                    } catch (e: Exception) {
-                        errorCount++
-                    }
-                }
-            } finally {
-                _isLoading.value = false
-                if (errorCount > 0) {
-                    _errorMessage.value = ErrorMessage.UploadSummary(successCount, errorCount)
-                }
+            val result = imageHandler.processSelectedImages(uriStrings)
+            _isLoading.value = false
+            if (result.errorCount > 0) {
+                _errorMessage.value =
+                    ErrorMessage.UploadSummary(result.successCount, result.errorCount)
             }
         }
     }
 
-    fun processCapturedImage(context: Context, imageUri: Uri) {
+    fun processCapturedImage(uriString: String) {
         viewModelScope.launch(Dispatchers.IO) {
             _isLoading.value = true
-            try {
-                val bytes =
-                    context.contentResolver.openInputStream(imageUri)?.use { it.readBytes() }
-                if (bytes != null) {
-                    val filename = "camera_${System.currentTimeMillis()}.jpg"
-                    val savedPath = imageSaver.save(bytes, filename)
-                    if (savedPath != null) {
-                        manager.submitImage("file://$savedPath")
-                    } else {
-                        _errorMessage.value = ErrorMessage.PhotoSaveFailed
-                    }
-                } else {
-                    _errorMessage.value = ErrorMessage.PhotoReadFailed
-                }
-            } catch (e: Exception) {
-                _errorMessage.value = ErrorMessage.PhotoProcessingError(e.message ?: "")
-            } finally {
-                _isLoading.value = false
-                try {
-                    context.contentResolver.delete(imageUri, null, null)
-                } catch (e: Exception) {
-
-                }
-            }
+            val result = imageHandler.processCapturedImage(uriString)
+            _isLoading.value = false
+            result.errorMessage?.let { _errorMessage.value = it }
         }
     }
 
     fun retryTask(taskId: Long) {
         viewModelScope.launch {
-            val task = _tasks.value.find { it.id == taskId } ?: return@launch
-            manager.submitImage(task.imageUri)
-            repository.deleteTask(taskId)
+            retryTaskUseCase(taskId)
         }
     }
 
     fun deleteTask(taskId: Long) {
         viewModelScope.launch {
-            repository.deleteTask(taskId)
+            deleteTaskUseCase(taskId)
         }
     }
 

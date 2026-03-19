@@ -2,6 +2,7 @@ package com.chumakov123.casedocket.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chumakov123.casedocket.domain.model.ErrorMessage
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
@@ -20,7 +21,6 @@ import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.validator.ScheduleValidator
-import com.chumakov123.casedocket.util.ErrorMessage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
