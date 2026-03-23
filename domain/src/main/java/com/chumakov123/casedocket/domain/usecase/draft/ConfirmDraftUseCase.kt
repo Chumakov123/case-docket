@@ -11,6 +11,7 @@ class ConfirmDraftUseCase(
     private val rescheduleNotificationsUseCase: RescheduleNotificationsUseCase
 ) {
     suspend operator fun invoke(taskId: Long, confirmedSchedule: CourtSchedule) {
+        if (taskRepository.getTaskById(taskId) == null) return
         confirmedRepository.addSchedule(confirmedSchedule)
         taskRepository.deleteTask(taskId)
         rescheduleNotificationsUseCase()
