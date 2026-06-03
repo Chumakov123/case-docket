@@ -57,8 +57,6 @@ class ScheduleRecognitionManager(
         return repository.getNextPendingTask() != null
     }
 
-    suspend fun getPendingCount(): Int = repository.getPendingCount()
-
     fun observeTasks(): Flow<List<RecognitionTask>> = repository.observeTasks()
 
     private suspend fun findTask(taskId: Long): RecognitionTask? {
