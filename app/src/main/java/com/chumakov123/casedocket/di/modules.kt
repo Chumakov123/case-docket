@@ -13,6 +13,7 @@ import com.chumakov123.casedocket.data.repository.ImageHandlerImpl
 import com.chumakov123.casedocket.data.repository.InternalStorageImageSaver
 import com.chumakov123.casedocket.data.repository.OpenCvImagePreprocessorImpl
 import com.chumakov123.casedocket.data.repository.OpenCvLayoutAnalyzerImpl
+import com.chumakov123.casedocket.data.repository.PermissionRepositoryImpl
 import com.chumakov123.casedocket.data.repository.RecognitionTaskRepositoryImpl
 import com.chumakov123.casedocket.data.repository.SettingsRepositoryImpl
 import com.chumakov123.casedocket.data.repository.TesseractOcrServiceImpl
@@ -25,6 +26,7 @@ import com.chumakov123.casedocket.domain.repository.ImagePreprocessor
 import com.chumakov123.casedocket.domain.repository.ImageSaver
 import com.chumakov123.casedocket.domain.repository.NotificationScheduler
 import com.chumakov123.casedocket.domain.repository.OcrService
+import com.chumakov123.casedocket.domain.repository.PermissionRepository
 import com.chumakov123.casedocket.domain.repository.RecognitionTaskRepository
 import com.chumakov123.casedocket.domain.repository.SettingsRepository
 import com.chumakov123.casedocket.domain.service.RecognitionServiceController
@@ -40,6 +42,8 @@ import com.chumakov123.casedocket.domain.usecase.draft.GetDraftByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.RejectDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.draft.UpdateDraftUseCase
 import com.chumakov123.casedocket.domain.usecase.notification.RescheduleNotificationsUseCase
+import com.chumakov123.casedocket.domain.usecase.settings.GetPermissionsStateUseCase
+import com.chumakov123.casedocket.domain.usecase.settings.RefreshPermissionsUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSelectedTabUseCase
 import com.chumakov123.casedocket.domain.usecase.settings.UpdateSettingsUseCase
 import com.chumakov123.casedocket.domain.usecase.task.DeleteTaskUseCase
@@ -107,6 +111,9 @@ val domainModule = module {
         UpdateSelectedTabUseCase(repository = get())
     }
 
+    factory { GetPermissionsStateUseCase(repository = get()) }
+    factory { RefreshPermissionsUseCase(repository = get()) }
+
     factory { DeleteTaskUseCase(repository = get()) }
     factory {
         RetryTaskUseCase(
@@ -157,7 +164,9 @@ val appModule = module {
     viewModel {
         SettingsViewModel(
             getSettingsUseCase = get(),
-            updateSettingsUseCase = get()
+            updateSettingsUseCase = get(),
+            getPermissionsStateUseCase = get(),
+            refreshPermissionsUseCase = get()
         )
     }
 
@@ -212,6 +221,8 @@ val dataModule = module {
         )
     }
     single<RecognitionTaskRepository> { RecognitionTaskRepositoryImpl(dao = get(), json = get()) }
+
+    single<PermissionRepository> { PermissionRepositoryImpl(context = androidContext()) }
 
     single<DataStore<Preferences>> {
         PreferenceDataStoreFactory.create(

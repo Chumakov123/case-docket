@@ -1,16 +1,26 @@
 package com.chumakov123.casedocket.presentation.screens
 
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings as AndroidSettings
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,12 +29,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
@@ -36,6 +51,22 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel()
 ) {
     val settings by viewModel.settings.collectAsState()
+    val permissionsState by viewModel.permissionsState.collectAsState()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Обновляем статус разрешений при каждом возвращении на экран (onResume)
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshPermissions()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -56,6 +87,36 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            // Разрешения
+            Text(
+                text = stringResource(R.string.permissions),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            PermissionItem(
+                label = stringResource(R.string.permission_notifications),
+                granted = permissionsState.notificationsGranted,
+                onClick = { openAppSettings(context) }
+            )
+            
+            PermissionItem(
+                label = stringResource(R.string.permission_exact_alarms),
+                granted = permissionsState.exactAlarmsGranted,
+                onClick = { openExactAlarmSettings(context) }
+            )
+            
+            PermissionItem(
+                label = stringResource(R.string.permission_battery_optimization),
+                granted = permissionsState.batteryOptimizationsIgnored,
+                onClick = { openBatteryOptimizationSettings(context) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Язык
             Text(
                 text = stringResource(R.string.language),
@@ -118,6 +179,23 @@ fun SettingsScreen(
 }
 
 @Composable
+fun PermissionItem(label: String, granted: Boolean, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 4.dp)
+    ) {
+        Checkbox(
+            checked = granted,
+            onCheckedChange = null
+        )
+        Text(text = label, modifier = Modifier.padding(start = 8.dp))
+    }
+}
+
+@Composable
 fun LanguageOption(label: String, selected: Boolean, onClick: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         RadioButton(selected = selected, onClick = onClick)
@@ -142,5 +220,35 @@ fun NotificationOption(minutes: Int, selected: Boolean, onClick: () -> Unit) {
             else stringResource(R.string.notification_minutes, minutes),
             modifier = Modifier.padding(start = 8.dp)
         )
+    }
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
+}
+
+private fun openExactAlarmSettings(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val intent = Intent(AndroidSettings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+        context.startActivity(intent)
+    } else {
+        openAppSettings(context)
+    }
+}
+
+private fun openBatteryOptimizationSettings(context: Context) {
+    val intent = Intent(AndroidSettings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:${context.packageName}")
+    }
+    try {
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        val fallbackIntent = Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+        context.startActivity(fallbackIntent)
     }
 }

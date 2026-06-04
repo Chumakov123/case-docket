@@ -47,6 +47,7 @@
     <string name="show_past">Показать прошедшие</string>
     <string name="hide_past">Скрыть прошедшие</string>
     <string name="notification_channel_name">Предстоящие дела</string>
+    <string name="notification_channel_description">Уведомления о предстоящих судебных заседаниях</string>
     <string name="notification_title_single">Судебное дело в %s</string>
     <string name="notification_title_multiple">Судебные дела в %s (%d)</string>
     <string name="notification_summary">Нажмите для просмотра</string>
@@ -104,4 +105,9 @@
     <string name="add_case">Добавить дело</string>
     <string name="delete_case_confirmation_title">Удалить дело?</string>
     <string name="delete_case_confirmation_message">Вы уверены, что хотите удалить это дело из расписания?</string>
+
+    <string name="permissions">Разрешения</string>
+    <string name="permission_notifications">Уведомления</string>
+    <string name="permission_exact_alarms">Точные будильники</string>
+    <string name="permission_battery_optimization">Игнорировать оптимизацию батареи</string>
 </resources>

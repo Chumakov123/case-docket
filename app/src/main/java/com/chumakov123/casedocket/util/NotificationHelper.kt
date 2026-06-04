@@ -22,14 +22,21 @@ object NotificationHelper {
     ) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channelId = "upcoming_cases_channel"
+        // Используем новый ID канала, чтобы форсировать HIGH IMPORTANCE на устройствах, 
+        // где канал уже был создан с DEFAULT
+        val channelId = "upcoming_cases_channel_v2"
 
         if (notificationManager.getNotificationChannel(channelId) == null) {
             val channel = NotificationChannel(
                 channelId,
                 context.getString(R.string.notification_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = context.getString(R.string.notification_channel_description)
+                enableVibration(true)
+                setShowBadge(true)
+                lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
+            }
             notificationManager.createNotificationChannel(channel)
         }
 
@@ -55,15 +62,19 @@ object NotificationHelper {
             context.getString(R.string.notification_title_multiple, timeString, cases.size)
         }
 
+        val builder = NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+
         val notification = if (cases.size == 1) {
             val case = cases.first()
-            NotificationCompat.Builder(context, channelId)
-                .setContentTitle(title)
+            builder.setContentTitle(title)
                 .setContentText("${case.caseNumber} ($judge)")
                 .setStyle(NotificationCompat.BigTextStyle().bigText(case.description.text))
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
                 .build()
         } else {
             val inboxStyle = NotificationCompat.InboxStyle()
@@ -73,13 +84,9 @@ object NotificationHelper {
                 inboxStyle.addLine("${index + 1}. ${case.description.text}")
             }
 
-            NotificationCompat.Builder(context, channelId)
-                .setContentTitle(title)
+            builder.setContentTitle(title)
                 .setContentText(context.getString(R.string.notification_summary))
                 .setStyle(inboxStyle)
-                .setSmallIcon(R.drawable.ic_notification)
-                .setContentIntent(pendingIntent)
-                .setAutoCancel(true)
                 .build()
         }
 

@@ -1,10 +1,14 @@
 package com.chumakov123.casedocket.presentation.activity
 
 import android.Manifest
+import android.app.AlarmManager
 import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,22 +34,20 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : AppCompatActivity() {
     private val settingsViewModel: SettingsViewModel by viewModel()
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { }
+    ) { isGranted ->
+        if (isGranted) {
+            checkExactAlarmPermission()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         observeLanguage()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
+
+        requestNotificationPermission()
 
         enableEdgeToEdge()
         setContent {
@@ -57,6 +59,36 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     AppNavHost()
                 }
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                checkExactAlarmPermission()
+            }
+        } else {
+            checkExactAlarmPermission()
+        }
+    }
+
+    private fun checkExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(AlarmManager::class.java)
+            if (!alarmManager.canScheduleExactAlarms()) {
+
+                val intent = Intent().apply {
+                    action = Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                    data = Uri.fromParts("package", packageName, null)
+                }
+                startActivity(intent)
             }
         }
     }

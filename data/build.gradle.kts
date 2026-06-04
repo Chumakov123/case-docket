@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.datastore.core)
     implementation(libs.androidx.datastore.preferences.core)
+    implementation(libs.androidx.core)
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.kotlin.serialization.json)

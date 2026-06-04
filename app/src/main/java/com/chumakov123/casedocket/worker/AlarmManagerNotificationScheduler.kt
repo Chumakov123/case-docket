@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.chumakov123.casedocket.data.alarm.ActiveAlarmStore
 import com.chumakov123.casedocket.data.mapper.toDto
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
@@ -29,6 +30,7 @@ class AlarmManagerNotificationScheduler(
         cancelAllNotifications()
 
         if (!hasExactAlarmPermission()) {
+            Log.d("NotificationScheduler", "No exact alarm permission, falling back to WorkManager")
             workManagerScheduler.scheduleAllNotifications(schedules)
             return
         }
@@ -45,6 +47,7 @@ class AlarmManagerNotificationScheduler(
                     schedule.date.value,
                     LocalTime.of(case.time.hours, case.time.minutes)
                 )
+                // Оставляем только те дела, время которых еще не наступило
                 if (caseDateTime.isAfter(now)) {
                     Triple(schedule, case, caseDateTime)
                 } else null
@@ -79,7 +82,13 @@ class AlarmManagerNotificationScheduler(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val triggerTime = notifyTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val triggerTime = if (notifyTime.isAfter(now)) {
+                notifyTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            } else {
+                // Если время уведомления (за X минут) уже прошло, но дело еще не началось,
+                // ставим будильник на "сейчас + 1 секунда"
+                System.currentTimeMillis() + 1000
+            }
 
             alarmManager.setExactAndAllowWhileIdle(
                 AlarmManager.RTC_WAKEUP,

@@ -45,6 +45,7 @@
     <string name="russian" translatable="false">Русский</string>
     <string name="english" translatable="false">English</string>
     <string name="notification_channel_name">Upcoming cases</string>
+    <string name="notification_channel_description">Notifications about upcoming court cases</string>
     <string name="notification_title_single">Court case at %s</string>
     <string name="notification_title_multiple">Court cases at %s (%d)</string>
     <string name="notification_summary">Tap to view</string>
@@ -107,4 +108,9 @@
     <string name="add_case">Add case</string>
     <string name="delete_case_confirmation_title">Delete case?</string>
     <string name="delete_case_confirmation_message">Are you sure you want to delete this case from the schedule?</string>
+
+    <string name="permissions">Permissions</string>
+    <string name="permission_notifications">Notifications</string>
+    <string name="permission_exact_alarms">Exact alarms</string>
+    <string name="permission_battery_optimization">Ignore battery optimization</string>
 </resources>
