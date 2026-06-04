@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,6 +27,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.presentation.theme.AppTheme
+import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import com.chumakov123.casedocket.presentation.viewmodel.MainViewModel
 import org.koin.androidx.compose.koinViewModel
 
@@ -35,14 +37,20 @@ fun MainScreen(
     onNavigateToEditDraft: (Long) -> Unit,
     onNavigateToEditConfirmed: (Long) -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: MainViewModel = koinViewModel()
+    viewModel: MainViewModel = koinViewModel(),
+    confirmedViewModel: ConfirmedListViewModel = koinViewModel()
 ) {
     val selectedTab by viewModel.selectedTab.collectAsState()
+    val hasArchived by confirmedViewModel.hasArchived.collectAsState()
+    val showArchived by confirmedViewModel.showArchived.collectAsState()
 
     MainContent(
         selectedTab = selectedTab,
         onTabSelected = { viewModel.selectTab(it) },
-        onNavigateToSettings = onNavigateToSettings
+        onNavigateToSettings = onNavigateToSettings,
+        hasArchived = hasArchived,
+        showArchived = showArchived,
+        onToggleArchive = { confirmedViewModel.toggleShowArchived() }
     ) { tab ->
         when (tab) {
             0 -> DraftListScreen(
@@ -50,7 +58,8 @@ fun MainScreen(
             )
 
             1 -> ConfirmedListScreen(
-                onEditClick = onNavigateToEditConfirmed
+                onEditClick = onNavigateToEditConfirmed,
+                viewModel = confirmedViewModel
             )
         }
     }
@@ -62,6 +71,9 @@ private fun MainContent(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit,
     onNavigateToSettings: () -> Unit,
+    hasArchived: Boolean = false,
+    showArchived: Boolean = false,
+    onToggleArchive: () -> Unit = {},
     content: @Composable (Int) -> Unit
 ) {
     Scaffold(
@@ -76,6 +88,18 @@ private fun MainContent(
                     )
                 },
                 actions = {
+                    if (selectedTab == 1 && hasArchived) {
+                        IconButton(onClick = onToggleArchive) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = if (showArchived)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Default.Settings,

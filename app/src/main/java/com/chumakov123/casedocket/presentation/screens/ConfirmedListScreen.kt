@@ -1,6 +1,13 @@
 package com.chumakov123.casedocket.presentation.screens
 
-import androidx.compose.foundation.background
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,17 +25,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,8 +44,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -69,8 +79,8 @@ import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 import org.koin.androidx.compose.koinViewModel
-import androidx.compose.material3.ElevatedCard
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ConfirmedListScreen(
     onEditClick: (Long) -> Unit,
@@ -79,11 +89,37 @@ fun ConfirmedListScreen(
 ) {
     val activeItems by viewModel.activeItems.collectAsState()
     val archivedItems by viewModel.archivedItems.collectAsState()
-    val hasArchived by viewModel.hasArchived.collectAsState()
     val showArchived by viewModel.showArchived.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val listState = rememberLazyListState()
+
+    // State for expanded/collapsed schedules
+    val expandedStates = remember { mutableStateMapOf<Long, Boolean>() }
+
+    // Logic for initial expansion
+    LaunchedEffect(activeItems, archivedItems, showArchived) {
+        val allSchedules = mutableListOf<CourtSchedule>()
+        if (showArchived) {
+            allSchedules.addAll(
+                archivedItems.filterIsInstance<ConfirmedListItem.Header>()
+                    .map { it.schedule })
+        }
+        allSchedules.addAll(
+            activeItems.filterIsInstance<ConfirmedListItem.Header>()
+                .map { it.schedule })
+
+        if (allSchedules.size == 1) {
+            expandedStates[allSchedules.first().id] = true
+        } else if (expandedStates.isEmpty()) {
+            // Find the first active schedule
+            val firstActive = activeItems.filterIsInstance<ConfirmedListItem.Header>()
+                .firstOrNull()?.schedule
+            if (firstActive != null) {
+                expandedStates[firstActive.id] = true
+            }
+        }
+    }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -100,20 +136,6 @@ fun ConfirmedListScreen(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        if (hasArchived) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                ArchiveButton(
-                    showArchived = showArchived,
-                    onClick = { viewModel.toggleShowArchived() }
-                )
-            }
-        }
-
         when {
             activeItems.isEmpty() && archivedItems.isEmpty() -> {
                 Box(
@@ -157,50 +179,112 @@ fun ConfirmedListScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
                     ) {
                         if (showArchived) {
-                            items(archivedItems) { item ->
+                            val groupedArchived = archivedItems.groupBy { item ->
                                 when (item) {
-                                    is ConfirmedListItem.Header -> ScheduleHeaderItem(
-                                        schedule = item.schedule,
-                                        onEditClick = { onEditClick(item.schedule.id) }
-                                    )
+                                    is ConfirmedListItem.Header -> item.schedule.id
+                                    is ConfirmedListItem.Case -> item.scheduleId
+                                }
+                            }
+                            groupedArchived.forEach { (scheduleId, items) ->
+                                val header =
+                                    items.filterIsInstance<ConfirmedListItem.Header>().first()
+                                val cases = items.filterIsInstance<ConfirmedListItem.Case>()
+                                val isExpanded = expandedStates[scheduleId] ?: false
 
-                                    is ConfirmedListItem.Case -> CaseItem(
-                                        case = item.case,
-                                        isPast = item.isPast,
-                                        onResultSelected = { result ->
-                                            viewModel.updateCaseResult(
-                                                item.scheduleId,
-                                                item.case.caseNumber,
-                                                result
+                                item(key = "archived_header_$scheduleId") {
+                                    Column {
+                                        Spacer(Modifier.height(8.dp))
+                                        ScheduleHeaderItem(
+                                            schedule = header.schedule,
+                                            isExpanded = isExpanded,
+                                            onExpandClick = {
+                                                expandedStates[scheduleId] = !isExpanded
+                                            },
+                                            onEditClick = { onEditClick(header.schedule.id) }
+                                        )
+                                    }
+                                }
+
+                                items(
+                                    items = cases,
+                                    key = { "archived_${scheduleId}_${it.case.caseNumber}" }
+                                ) { item ->
+                                    AnimatedVisibility(
+                                        visible = isExpanded,
+                                        enter = expandVertically() + fadeIn(),
+                                        exit = shrinkVertically() + fadeOut()
+                                    ) {
+                                        Column {
+                                            Spacer(Modifier.height(8.dp))
+                                            CaseItem(
+                                                case = item.case,
+                                                isPast = item.isPast,
+                                                onResultSelected = { result ->
+                                                    viewModel.updateCaseResult(
+                                                        item.scheduleId,
+                                                        item.case.caseNumber,
+                                                        result
+                                                    )
+                                                }
                                             )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         }
 
-                        items(activeItems) { item ->
+                        val groupedActive = activeItems.groupBy { item ->
                             when (item) {
-                                is ConfirmedListItem.Header -> ScheduleHeaderItem(
-                                    schedule = item.schedule,
-                                    onEditClick = { onEditClick(item.schedule.id) }
-                                )
+                                is ConfirmedListItem.Header -> item.schedule.id
+                                is ConfirmedListItem.Case -> item.scheduleId
+                            }
+                        }
+                        groupedActive.forEach { (scheduleId, items) ->
+                            val header = items.filterIsInstance<ConfirmedListItem.Header>().first()
+                            val cases = items.filterIsInstance<ConfirmedListItem.Case>()
+                            val isExpanded = expandedStates[scheduleId] ?: false
 
-                                is ConfirmedListItem.Case -> CaseItem(
-                                    case = item.case,
-                                    isPast = item.isPast,
-                                    onResultSelected = { result ->
-                                        viewModel.updateCaseResult(
-                                            item.scheduleId,
-                                            item.case.caseNumber,
-                                            result
+                            item(key = "header_$scheduleId") {
+                                Column {
+                                    Spacer(Modifier.height(8.dp))
+                                    ScheduleHeaderItem(
+                                        schedule = header.schedule,
+                                        isExpanded = isExpanded,
+                                        onExpandClick = {
+                                            expandedStates[scheduleId] = !isExpanded
+                                        },
+                                        onEditClick = { onEditClick(header.schedule.id) }
+                                    )
+                                }
+                            }
+
+                            items(
+                                items = cases,
+                                key = { "${scheduleId}_${it.case.caseNumber}" }
+                            ) { item ->
+                                AnimatedVisibility(
+                                    visible = isExpanded,
+                                    enter = expandVertically() + fadeIn(),
+                                    exit = shrinkVertically() + fadeOut()
+                                ) {
+                                    Column {
+                                        Spacer(Modifier.height(8.dp))
+                                        CaseItem(
+                                            case = item.case,
+                                            isPast = item.isPast,
+                                            onResultSelected = { result ->
+                                                viewModel.updateCaseResult(
+                                                    item.scheduleId,
+                                                    item.case.caseNumber,
+                                                    result
+                                                )
+                                            }
                                         )
                                     }
-                                )
+                                }
                             }
                         }
                     }
@@ -212,12 +296,18 @@ fun ConfirmedListScreen(
 }
 
 @Composable
-fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
+fun ScheduleHeaderItem(
+    schedule: CourtSchedule,
+    isExpanded: Boolean,
+    onExpandClick: () -> Unit,
+    onEditClick: () -> Unit
+) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        tonalElevation = 1.dp
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onExpandClick),
+        tonalElevation = 3.dp
     ) {
         Row(
             modifier = Modifier
@@ -226,23 +316,35 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = schedule.date.toDisplayFormat(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
+            Row(
+                modifier = Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isExpanded) Icons.Default.ExpandMore else Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
                 )
-                Text(
-                    text = schedule.judge.text,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = stringResource(R.string.cases_count, schedule.cases.size),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Column {
+                    Text(
+                        text = schedule.date.toDisplayFormat(),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = schedule.judge.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = stringResource(R.string.cases_count, schedule.cases.size),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             IconButton(
                 onClick = onEditClick,
@@ -308,6 +410,7 @@ fun CaseItem(
                     if (case.isPreliminary) {
                         StatusTag(
                             text = stringResource(R.string.psz),
+                            icon = Icons.Default.History,
                             containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                             contentColor = MaterialTheme.colorScheme.onTertiaryContainer
                         )
@@ -316,6 +419,7 @@ fun CaseItem(
                     if (case.isVideoConference) {
                         StatusTag(
                             text = stringResource(R.string.vks),
+                            icon = Icons.Default.Videocam,
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                         )
@@ -348,6 +452,7 @@ fun CaseItem(
 @Composable
 private fun StatusTag(
     text: String,
+    icon: ImageVector,
     containerColor: Color,
     contentColor: Color
 ) {
@@ -356,11 +461,21 @@ private fun StatusTag(
         contentColor = contentColor,
         shape = MaterialTheme.shapes.extraSmall
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
     }
 }
 
@@ -381,15 +496,8 @@ fun ResultSelector(
                     style = MaterialTheme.typography.labelMedium
                 )
             },
-            colors = if (selectedResult != null) {
-                AssistChipDefaults.assistChipColors(
-                    labelColor = MaterialTheme.colorScheme.primary,
-                    leadingIconContentColor = MaterialTheme.colorScheme.primary,
-                    trailingIconContentColor = MaterialTheme.colorScheme.primary
-                )
-            } else {
-                AssistChipDefaults.assistChipColors()
-            }
+            colors = selectedResult?.let { getResultColors(it) }
+                ?: AssistChipDefaults.assistChipColors()
         )
 
         DropdownMenu(
@@ -457,6 +565,8 @@ fun ScheduleHeaderItemPreview() {
                     CourtCase("1", CaseTime(9, 0), CourtCaseDescription("Test"))
                 )
             ),
+            isExpanded = true,
+            onExpandClick = {},
             onEditClick = {}
         )
     }
@@ -471,24 +581,31 @@ private fun getResultStringRes(result: CaseResult): Int = when (result) {
 }
 
 @Composable
-fun ArchiveButton(showArchived: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Icon(
-            imageVector = if (showArchived) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-            contentDescription = null,
-            modifier = Modifier.size(18.dp)
+private fun getResultColors(result: CaseResult) = when (val isDark = isSystemInDarkTheme()) {
+    else -> when (result) {
+        CaseResult.RECESS -> AssistChipDefaults.assistChipColors(
+            containerColor = if (isDark) Color(0xFF733702) else Color(0xFFFFDCC0),
+            labelColor = if (isDark) Color(0xFFFFB785) else Color(0xFF2F1500)
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = if (showArchived)
-                stringResource(R.string.hide_past)
-            else
-                stringResource(R.string.show_past),
-            style = MaterialTheme.typography.labelLarge
+
+        CaseResult.ADJOURNMENT -> AssistChipDefaults.assistChipColors(
+            containerColor = if (isDark) Color(0xFF93000A) else Color(0xFFFFDAD6),
+            labelColor = if (isDark) Color(0xFFFFDAD6) else Color(0xFF410002)
+        )
+
+        CaseResult.EXPERTISE -> AssistChipDefaults.assistChipColors(
+            containerColor = if (isDark) Color(0xFF553571) else Color(0xFFF3DAFF),
+            labelColor = if (isDark) Color(0xFFF3DAFF) else Color(0xFF250040)
+        )
+
+        CaseResult.RESTARTED -> AssistChipDefaults.assistChipColors(
+            containerColor = if (isDark) Color(0xFF004D61) else Color(0xFFC7EFFF),
+            labelColor = if (isDark) Color(0xFFC7EFFF) else Color(0xFF001F29)
+        )
+
+        CaseResult.DECISION -> AssistChipDefaults.assistChipColors(
+            containerColor = if (isDark) Color(0xFF005316) else Color(0xFFC8E6C9),
+            labelColor = if (isDark) Color(0xFFADF3A0) else Color(0xFF1B5E20)
         )
     }
 }

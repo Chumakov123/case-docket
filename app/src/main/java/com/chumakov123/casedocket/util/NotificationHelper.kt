@@ -72,9 +72,9 @@ object NotificationHelper {
 
         val notification = if (cases.size == 1) {
             val case = cases.first()
-            val pszPrefix = if (case.isPreliminary) "${context.getString(R.string.psz)} " else ""
+            val pszPrefix = if (case.isPreliminary) "[${context.getString(R.string.psz)}] " else ""
             val vksPrefix =
-                if (case.isVideoConference) "${context.getString(R.string.vks)} " else ""
+                if (case.isVideoConference) "[${context.getString(R.string.vks)}] " else ""
             builder.setContentTitle(title)
                 .setContentText("$pszPrefix$vksPrefix${case.caseNumber} ($judge)")
                 .setStyle(NotificationCompat.BigTextStyle().bigText(case.description.text))
