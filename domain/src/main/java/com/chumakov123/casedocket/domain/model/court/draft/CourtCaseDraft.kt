@@ -7,4 +7,6 @@ data class CourtCaseDraft(
     val caseNumber: String?,
     val time: CaseTime?,
     val description: CourtCaseDescription,
+    val isPreliminary: Boolean = false,
+    val isVideoConference: Boolean = false,
 )

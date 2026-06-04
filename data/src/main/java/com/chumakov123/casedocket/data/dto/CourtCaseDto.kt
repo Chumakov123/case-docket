@@ -6,5 +6,7 @@ import kotlinx.serialization.Serializable
 data class CourtCaseDto(
     val caseNumber: String,
     val time: CaseTimeDto,
-    val description: CourtCaseDescriptionDto
+    val description: CourtCaseDescriptionDto,
+    val isPreliminary: Boolean = false,
+    val isVideoConference: Boolean = false
 )

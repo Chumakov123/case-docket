@@ -191,6 +191,28 @@ class EditDraftViewModel(
         }
     }
 
+    fun updateCasePreliminary(index: Int, isPreliminary: Boolean) {
+        _currentDraft.update { draft ->
+            draft?.let {
+                val updatedCases = it.cases.toMutableList().apply {
+                    this[index] = this[index].copy(isPreliminary = isPreliminary)
+                }
+                it.copy(cases = updatedCases)
+            }
+        }
+    }
+
+    fun updateCaseVideoConference(index: Int, isVideoConference: Boolean) {
+        _currentDraft.update { draft ->
+            draft?.let {
+                val updatedCases = it.cases.toMutableList().apply {
+                    this[index] = this[index].copy(isVideoConference = isVideoConference)
+                }
+                it.copy(cases = updatedCases)
+            }
+        }
+    }
+
     fun confirmDraft(onComplete: () -> Unit) {
         val draft = _currentDraft.value ?: return
         val mode = _mode.value as? EditMode.Draft ?: return
@@ -291,5 +313,7 @@ fun CourtScheduleDraft.toCourtSchedule(): CourtSchedule = CourtSchedule(
 fun CourtCaseDraft.toCourtCase(): CourtCase = CourtCase(
     caseNumber = requireNotNull(caseNumber) { "Case number must not be null" },
     time = requireNotNull(time) { "Time must not be null" },
-    description = description
+    description = description,
+    isPreliminary = isPreliminary,
+    isVideoConference = isVideoConference
 )

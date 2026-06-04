@@ -6,7 +6,9 @@ import java.time.LocalDateTime
 data class CourtCase(
     val caseNumber: String,
     val time: CaseTime,
-    val description: CourtCaseDescription
+    val description: CourtCaseDescription,
+    val isPreliminary: Boolean = false,
+    val isVideoConference: Boolean = false
 ) {
     fun isPast(now: LocalDateTime, date: LocalDate): Boolean {
         val caseDateTime = LocalDateTime.of(date, java.time.LocalTime.of(time.hours, time.minutes))

@@ -7,6 +7,8 @@ data class CourtCaseDraftDto(
     val caseNumber: String?,
     val time: CaseTimeDto?,
     val description: CourtCaseDescriptionDto,
+    val isPreliminary: Boolean = false,
+    val isVideoConference: Boolean = false
 )
 
 

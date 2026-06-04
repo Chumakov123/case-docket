@@ -221,6 +221,18 @@ fun EditDraftScreen(
                                                 it
                                             )
                                         },
+                                        onPreliminaryChange = {
+                                            viewModel.updateCasePreliminary(
+                                                index,
+                                                it
+                                            )
+                                        },
+                                        onVideoConferenceChange = {
+                                            viewModel.updateCaseVideoConference(
+                                                index,
+                                                it
+                                            )
+                                        },
                                         onDelete = { viewModel.deleteCase(index) }
                                     )
                                 }

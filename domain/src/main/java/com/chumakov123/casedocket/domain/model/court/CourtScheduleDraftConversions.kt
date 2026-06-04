@@ -12,5 +12,7 @@ fun CourtSchedule.toDraft(): CourtScheduleDraft = CourtScheduleDraft(
 fun CourtCase.toDraft(): CourtCaseDraft = CourtCaseDraft(
     caseNumber = this.caseNumber,
     time = this.time,
-    description = this.description
+    description = this.description,
+    isPreliminary = this.isPreliminary,
+    isVideoConference = this.isVideoConference
 )

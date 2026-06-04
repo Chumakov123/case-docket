@@ -114,4 +114,8 @@
     <string name="permission_exact_alarms">Exact alarms</string>
     <string name="permission_battery_optimization">Ignore battery optimization</string>
     <string name="schedule">Schedule</string>
+    <string name="preliminary_hearing">Preliminary hearing</string>
+    <string name="psz">PH</string>
+    <string name="video_conference">Video conference</string>
+    <string name="vks">VCS</string>
 </resources>

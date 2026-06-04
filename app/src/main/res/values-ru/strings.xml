@@ -111,4 +111,8 @@
     <string name="permission_exact_alarms">Точные будильники</string>
     <string name="permission_battery_optimization">Игнорировать оптимизацию батареи</string>
     <string name="schedule">Расписание</string>
+    <string name="preliminary_hearing">Предварительное судебное заседание</string>
+    <string name="psz">ПСЗ</string>
+    <string name="video_conference">Видеоконференц-связь</string>
+    <string name="vks">ВКС</string>
 </resources>

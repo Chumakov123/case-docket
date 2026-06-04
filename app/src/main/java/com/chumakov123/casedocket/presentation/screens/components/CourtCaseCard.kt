@@ -12,9 +12,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -37,6 +39,8 @@ fun CourtCaseCard(
     onCaseNumberChange: (String) -> Unit,
     onTimeChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onPreliminaryChange: (Boolean) -> Unit,
+    onVideoConferenceChange: (Boolean) -> Unit,
     onDelete: () -> Unit
 ) {
     val caseNumber by remember(courtCaseDraft) {
@@ -113,6 +117,38 @@ fun CourtCaseCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 editDescription = true
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = courtCaseDraft.isPreliminary,
+                    onCheckedChange = { onPreliminaryChange(it) }
+                )
+                Text(
+                    text = stringResource(R.string.preliminary_hearing),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = courtCaseDraft.isVideoConference,
+                    onCheckedChange = { onVideoConferenceChange(it) }
+                )
+                Text(
+                    text = stringResource(R.string.video_conference),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
