@@ -24,11 +24,11 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -68,6 +69,7 @@ import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.material3.ElevatedCard
 
 @Composable
 fun ConfirmedListScreen(
@@ -212,8 +214,10 @@ fun ConfirmedListScreen(
 @Composable
 fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        modifier = Modifier.fillMaxWidth()
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        tonalElevation = 1.dp
     ) {
         Row(
             modifier = Modifier
@@ -226,7 +230,8 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
                 Text(
                     text = schedule.date.toDisplayFormat(),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = schedule.judge.text,
@@ -246,7 +251,7 @@ fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = stringResource(R.string.edit_schedule),
-                    tint = MaterialTheme.colorScheme.outline,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -261,18 +266,17 @@ fun CaseItem(
     onResultSelected: (CaseResult?) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    ElevatedCard(
         modifier = modifier
             .fillMaxWidth()
-            .alpha(if (isPast) 0.5f else 1f),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+            .alpha(if (isPast) 0.6f else 1f),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        shape = MaterialTheme.shapes.medium,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant
-        )
+        elevation = CardDefaults.elevatedCardElevation(
+            defaultElevation = if (isPast) 1.dp else 3.dp
+        ),
+        shape = MaterialTheme.shapes.medium
     ) {
         Column(
             modifier = Modifier
@@ -468,22 +472,23 @@ private fun getResultStringRes(result: CaseResult): Int = when (result) {
 
 @Composable
 fun ArchiveButton(showArchived: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(
+    FilledTonalButton(
         onClick = onClick,
         modifier = modifier,
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.medium
     ) {
         Icon(
             imageVector = if (showArchived) Icons.Default.VisibilityOff else Icons.Default.Visibility,
             contentDescription = null,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(18.dp)
         )
-        Spacer(modifier = Modifier.size(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = if (showArchived)
                 stringResource(R.string.hide_past)
             else
-                stringResource(R.string.show_past)
+                stringResource(R.string.show_past),
+            style = MaterialTheme.typography.labelLarge
         )
     }
 }
