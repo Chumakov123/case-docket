@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -31,6 +33,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -44,16 +47,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.court.CaseResult
+import com.chumakov123.casedocket.domain.model.court.CaseTime
 import com.chumakov123.casedocket.domain.model.court.CourtCase
+import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
+import com.chumakov123.casedocket.domain.model.court.Judge
+import com.chumakov123.casedocket.domain.model.court.ScheduleDate
 import com.chumakov123.casedocket.domain.model.court.toHHMM
 import com.chumakov123.casedocket.presentation.screens.components.EmptyState
+import com.chumakov123.casedocket.presentation.theme.AppTheme
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListItem
 import com.chumakov123.casedocket.presentation.viewmodel.ConfirmedListViewModel
 import my.nanihadesuka.compose.LazyColumnScrollbar
@@ -111,7 +120,10 @@ fun ConfirmedListScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    EmptyState(message = stringResource(R.string.no_actual_schedule))
+                    EmptyState(
+                        message = stringResource(R.string.no_actual_schedule),
+                        icon = Icons.AutoMirrored.Filled.EventNote
+                    )
                 }
             }
 
@@ -122,7 +134,10 @@ fun ConfirmedListScreen(
                         .weight(1f),
                     contentAlignment = Alignment.Center
                 ) {
-                    EmptyState(message = stringResource(R.string.no_actual_schedule))
+                    EmptyState(
+                        message = stringResource(R.string.no_actual_schedule),
+                        icon = Icons.AutoMirrored.Filled.EventNote
+                    )
                 }
             }
 
@@ -196,37 +211,45 @@ fun ConfirmedListScreen(
 
 @Composable
 fun ScheduleHeaderItem(schedule: CourtSchedule, onEditClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column {
-            Text(
-                text = schedule.date.toDisplayFormat(),
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = schedule.judge.text,
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                text = stringResource(R.string.cases_count, schedule.cases.size),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        IconButton(
-            onClick = onEditClick,
-            modifier = Modifier.size(32.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Default.Edit,
-                contentDescription = stringResource(R.string.edit_schedule),
-                modifier = Modifier.size(20.dp)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = schedule.date.toDisplayFormat(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = schedule.judge.text,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.cases_count, schedule.cases.size),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.edit_schedule),
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
         }
     }
 }
@@ -243,67 +266,67 @@ fun CaseItem(
             .fillMaxWidth()
             .alpha(if (isPast) 0.5f else 1f),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        ),
+        shape = MaterialTheme.shapes.medium,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = case.caseNumber,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)
                 )
 
-                if (case.isPreliminary) {
-                    Text(
-                        text = stringResource(R.string.psz),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                shape = MaterialTheme.shapes.extraSmall
-                            )
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
-                if (case.isVideoConference) {
-                    Text(
-                        text = stringResource(R.string.vks),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier
-                            .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.extraSmall
-                            )
-                            .padding(horizontal = 4.dp, vertical = 2.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
                 Text(
                     text = case.time.toHHMM(),
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = case.description.text,
-                style = MaterialTheme.typography.bodyMedium
-            )
+
+            if (case.isPreliminary || case.isVideoConference) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (case.isPreliminary) {
+                        StatusTag(
+                            text = stringResource(R.string.psz),
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                    }
+
+                    if (case.isVideoConference) {
+                        StatusTag(
+                            text = stringResource(R.string.vks),
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = case.description.text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -315,6 +338,25 @@ fun CaseItem(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun StatusTag(
+    text: String,
+    containerColor: Color,
+    contentColor: Color
+) {
+    Surface(
+        color = containerColor,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.extraSmall
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
     }
 }
 
@@ -375,6 +417,44 @@ fun ResultSelector(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CaseItemPreview() {
+    AppTheme {
+        Box(Modifier.padding(16.dp)) {
+            CaseItem(
+                case = CourtCase(
+                    caseNumber = "А40-123456/2023",
+                    time = CaseTime(10, 30),
+                    description = CourtCaseDescription("Истец: ООО 'Ромашка', Ответчик: ПАО 'Сбербанк'"),
+                    isPreliminary = true,
+                    isVideoConference = true,
+                    result = CaseResult.ADJOURNMENT
+                ),
+                isPast = false,
+                onResultSelected = {}
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ScheduleHeaderItemPreview() {
+    AppTheme {
+        ScheduleHeaderItem(
+            schedule = CourtSchedule(
+                date = ScheduleDate.parse("15.05.2024")!!,
+                judge = Judge("Сидоров С.С."),
+                cases = listOf(
+                    CourtCase("1", CaseTime(9, 0), CourtCaseDescription("Test"))
+                )
+            ),
+            onEditClick = {}
+        )
     }
 }
 

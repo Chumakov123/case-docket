@@ -54,13 +54,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.domain.model.ErrorMessage
 import com.chumakov123.casedocket.domain.model.RecognitionTask
 import com.chumakov123.casedocket.domain.model.TaskStatus
+import com.chumakov123.casedocket.domain.model.court.Judge
+import com.chumakov123.casedocket.domain.model.court.ScheduleDate
+import com.chumakov123.casedocket.domain.model.court.draft.CourtScheduleDraft
 import com.chumakov123.casedocket.presentation.screens.components.EmptyState
+import com.chumakov123.casedocket.presentation.theme.AppTheme
 import com.chumakov123.casedocket.presentation.viewmodel.DraftListViewModel
 import com.chumakov123.casedocket.util.CameraHelper
 import com.chumakov123.casedocket.util.toDisplayString
@@ -141,6 +147,7 @@ fun DraftListScreen(
         ) {
             EmptyState(
                 message = stringResource(R.string.no_images_message),
+                icon = Icons.Default.PhotoLibrary,
                 modifier = Modifier.align(Alignment.Center)
             )
         } else {
@@ -166,10 +173,7 @@ fun DraftListScreen(
                 ) {
                     if (taskGroups.pendingProcessing.isNotEmpty()) {
                         item {
-                            Text(
-                                text = stringResource(R.string.pending_section),
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                            ListHeader(text = stringResource(R.string.pending_section))
                         }
                         items(taskGroups.pendingProcessing) { task ->
                             PendingTaskItem(task = task)
@@ -178,10 +182,7 @@ fun DraftListScreen(
 
                     if (taskGroups.completed.isNotEmpty()) {
                         item {
-                            Text(
-                                text = stringResource(R.string.ready_section),
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                            ListHeader(text = stringResource(R.string.ready_section))
                         }
                         items(taskGroups.completed) { task ->
                             DraftTaskItem(
@@ -193,10 +194,7 @@ fun DraftListScreen(
 
                     if (taskGroups.failed.isNotEmpty()) {
                         item {
-                            Text(
-                                text = stringResource(R.string.failed_section),
-                                style = MaterialTheme.typography.titleLarge
-                            )
+                            ListHeader(text = stringResource(R.string.failed_section))
                         }
                         items(taskGroups.failed) { task ->
                             FailedTaskItem(
@@ -273,6 +271,17 @@ fun DraftListScreen(
 }
 
 @Composable
+fun ListHeader(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = modifier
+            .padding(top = 16.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
 fun PendingTaskItem(task: RecognitionTask) {
     val statusText = when (task.status) {
         TaskStatus.PENDING -> stringResource(R.string.status_pending)
@@ -313,28 +322,39 @@ fun PendingTaskItem(task: RecognitionTask) {
 fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        onClick = onEditClick
+        onClick = onEditClick,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-                Text(stringResource(R.string.image_number, task.id))
+                Text(
+                    text = stringResource(R.string.image_number, task.id),
+                    style = MaterialTheme.typography.titleMedium
+                )
                 Text(
                     text = stringResource(R.string.uploaded_label, formatDate(task.createdAt)),
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 task.resultDraft?.let { draft ->
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         if (draft.judge.text.isNotBlank()) {
                             IconWithText(
@@ -344,30 +364,34 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
                                 contentDescription = stringResource(R.string.judge)
                             )
                         }
-                        draft.date?.let { date ->
-                            IconWithText(
-                                icon = Icons.Default.CalendarToday,
-                                text = date.toDisplayFormat(),
-                                contentDescription = stringResource(R.string.date)
-                            )
-                        }
-                        if (draft.cases.isNotEmpty()) {
-                            IconWithText(
-                                icon = Icons.AutoMirrored.Filled.List,
-                                text = draft.cases.size.toString(),
-                                contentDescription = stringResource(R.string.cases_count)
-                            )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            draft.date?.let { date ->
+                                IconWithText(
+                                    icon = Icons.Default.CalendarToday,
+                                    text = date.toDisplayFormat(),
+                                    contentDescription = stringResource(R.string.date)
+                                )
+                            }
+                            if (draft.cases.isNotEmpty()) {
+                                IconWithText(
+                                    icon = Icons.AutoMirrored.Filled.List,
+                                    text = draft.cases.size.toString(),
+                                    contentDescription = stringResource(R.string.cases_count)
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            IconButton(onClick = onEditClick) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = stringResource(R.string.edit)
-                )
-            }
+            Icon(
+                Icons.Default.Edit,
+                contentDescription = stringResource(R.string.edit),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -435,8 +459,33 @@ fun IconWithText(
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = color
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DraftTaskItemPreview() {
+    AppTheme {
+        Box(Modifier.padding(16.dp)) {
+            DraftTaskItem(
+                task = RecognitionTask(
+                    id = 1,
+                    imageUri = "",
+                    status = TaskStatus.COMPLETED,
+                    createdAt = java.util.Date(),
+                    resultDraft = CourtScheduleDraft(
+                        date = ScheduleDate.parse("12.12.2023"),
+                        judge = Judge("Иванов Иван Иванович"),
+                        cases = emptyList()
+                    )
+                ),
+                onEditClick = {}
+            )
+        }
     }
 }
 
