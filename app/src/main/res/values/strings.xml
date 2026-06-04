@@ -26,6 +26,7 @@
     <string name="time_placeholder">--:--</string>
     <string name="description_placeholder">Add case description</string>
     <string name="edit_case_number_title">Case number</string>
+    <string name="edit_judge_title">Judge\'s name</string>
     <string name="edit_time_title">Time</string>
     <string name="edit_description_title">Case description</string>
     <string name="error_title">Recognition error</string>
@@ -109,7 +110,7 @@
     <string name="add_case">Add case</string>
     <string name="delete_case_confirmation_title">Delete case?</string>
     <string name="delete_case_confirmation_message">Are you sure you want to delete this case from the schedule?</string>
-    <string name="errors_remaining">Corrections left: %d</string>
+    <string name="errors_remaining">Errors remaining: %d</string>
 
     <string name="permissions">Permissions</string>
     <string name="permission_notifications">Notifications</string>

@@ -1,5 +1,6 @@
 package com.chumakov123.casedocket.presentation.screens.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,10 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +36,7 @@ import com.chumakov123.casedocket.domain.model.court.draft.CourtCaseDraft
 import com.chumakov123.casedocket.domain.model.court.toHHMM
 import com.chumakov123.casedocket.domain.model.validation.CaseValidation
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CourtCaseCard(
     courtCaseDraft: CourtCaseDraft,
@@ -66,10 +71,10 @@ fun CourtCaseCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         )
     ) {
-        Column(Modifier.padding(14.dp)) {
+        Column(Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 EditableTextBlock(
                     value = caseNumber,
@@ -86,26 +91,23 @@ fun CourtCaseCard(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    EditableTimeBlock(
-                        time = time,
-                        placeholder = stringResource(R.string.time_placeholder),
-                        isError = validation.timeError,
-                        modifier = Modifier
-                    ) {
-                        editTime = true
-                    }
+                EditableTimeBlock(
+                    time = time,
+                    placeholder = stringResource(R.string.time_placeholder),
+                    isError = validation.timeError,
+                    modifier = Modifier
+                ) {
+                    editTime = true
+                }
 
-                    IconButton(
-                        onClick = { showDeleteCaseDialog = true },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.DeleteOutline,
-                            contentDescription = stringResource(R.string.delete_case),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
+                IconButton(
+                    onClick = { showDeleteCaseDialog = true },
+                ) {
+                    Icon(
+                        Icons.Default.DeleteOutline,
+                        contentDescription = stringResource(R.string.delete_case),
+                        tint = MaterialTheme.colorScheme.error
+                    )
                 }
             }
 
@@ -122,35 +124,40 @@ fun CourtCaseCard(
                 editDescription = true
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Checkbox(
-                    checked = courtCaseDraft.isPreliminary,
-                    onCheckedChange = { onPreliminaryChange(it) }
+                FilterChip(
+                    selected = courtCaseDraft.isPreliminary,
+                    onClick = { onPreliminaryChange(!courtCaseDraft.isPreliminary) },
+                    label = { Text(stringResource(R.string.psz)) },
+                    leadingIcon = if (courtCaseDraft.isPreliminary) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        }
+                    } else null
                 )
-                Text(
-                    text = stringResource(R.string.preliminary_hearing),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Checkbox(
-                    checked = courtCaseDraft.isVideoConference,
-                    onCheckedChange = { onVideoConferenceChange(it) }
-                )
-                Text(
-                    text = stringResource(R.string.video_conference),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                FilterChip(
+                    selected = courtCaseDraft.isVideoConference,
+                    onClick = { onVideoConferenceChange(!courtCaseDraft.isVideoConference) },
+                    label = { Text(stringResource(R.string.vks)) },
+                    leadingIcon = if (courtCaseDraft.isVideoConference) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        }
+                    } else null
                 )
             }
         }
