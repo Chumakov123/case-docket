@@ -21,7 +21,7 @@ class WorkManagerNotificationScheduler(
     private val json: Json
 ) : NotificationScheduler {
 
-    private val workManager = WorkManager.Companion.getInstance(context)
+    private val workManager = WorkManager.getInstance(context)
 
     override suspend fun scheduleAllNotifications(schedules: List<CourtSchedule>) {
         cancelAllNotifications()

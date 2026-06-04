@@ -28,7 +28,8 @@ fun CourtCaseDraft.toDto(): CourtCaseDraftDto = CourtCaseDraftDto(
     time = time?.toDto(),
     description = description.toDto(),
     isPreliminary = isPreliminary,
-    isVideoConference = isVideoConference
+    isVideoConference = isVideoConference,
+    result = result?.toDto()
 )
 
 fun CourtScheduleDraft.toDto(): CourtScheduleDraftDto = CourtScheduleDraftDto(
@@ -52,7 +53,8 @@ fun CourtCaseDraftDto.toDomain(): CourtCaseDraft = CourtCaseDraft(
     time = time?.toDomain(),
     description = description.toDomain(),
     isPreliminary = isPreliminary,
-    isVideoConference = isVideoConference
+    isVideoConference = isVideoConference,
+    result = result?.toDomain()
 )
 
 fun CourtScheduleDraftDto.toDomain(): CourtScheduleDraft = CourtScheduleDraft(

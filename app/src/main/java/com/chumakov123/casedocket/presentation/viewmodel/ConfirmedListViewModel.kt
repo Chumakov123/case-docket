@@ -2,15 +2,19 @@ package com.chumakov123.casedocket.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.chumakov123.casedocket.domain.model.court.CaseResult
 import com.chumakov123.casedocket.domain.model.court.CourtCase
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
+import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedScheduleByIdUseCase
 import com.chumakov123.casedocket.domain.usecase.confirmed.GetConfirmedSchedulesUseCase
+import com.chumakov123.casedocket.domain.usecase.confirmed.UpdateConfirmedScheduleUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
 sealed class ConfirmedListItem {
@@ -20,7 +24,9 @@ sealed class ConfirmedListItem {
 }
 
 class ConfirmedListViewModel(
-    getConfirmedSchedulesUseCase: GetConfirmedSchedulesUseCase
+    getConfirmedSchedulesUseCase: GetConfirmedSchedulesUseCase,
+    private val getConfirmedScheduleByIdUseCase: GetConfirmedScheduleByIdUseCase,
+    private val updateConfirmedScheduleUseCase: UpdateConfirmedScheduleUseCase
 ) : ViewModel() {
 
     private val now = MutableStateFlow(LocalDateTime.now())
@@ -92,5 +98,15 @@ class ConfirmedListViewModel(
 
     fun refreshTime() {
         now.value = LocalDateTime.now()
+    }
+
+    fun updateCaseResult(scheduleId: Long, caseNumber: String, result: CaseResult?) {
+        viewModelScope.launch {
+            val schedule = getConfirmedScheduleByIdUseCase(scheduleId) ?: return@launch
+            val updatedCases = schedule.cases.map {
+                if (it.caseNumber == caseNumber) it.copy(result = result) else it
+            }
+            updateConfirmedScheduleUseCase(schedule.copy(cases = updatedCases))
+        }
     }
 }

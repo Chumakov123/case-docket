@@ -119,4 +119,9 @@
     <string name="psz">PH</string>
     <string name="video_conference">Video conference</string>
     <string name="vks">VCS</string>
+    <string name="result_recess">Recess</string>
+    <string name="result_adjournment">Adjournment</string>
+    <string name="result_expertise">Expertise</string>
+    <string name="result_restarted">Restarted</string>
+    <string name="result_decision">Decision</string>
 </resources>

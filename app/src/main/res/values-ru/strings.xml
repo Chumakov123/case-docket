@@ -116,4 +116,9 @@
     <string name="psz">ПСЗ</string>
     <string name="video_conference">Видеоконференц-связь</string>
     <string name="vks">ВКС</string>
+    <string name="result_recess">Перерыв</string>
+    <string name="result_adjournment">Отложение</string>
+    <string name="result_expertise">Экспертиза</string>
+    <string name="result_restarted">Начато сначала</string>
+    <string name="result_decision">Решение</string>
 </resources>

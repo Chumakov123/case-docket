@@ -8,5 +8,6 @@ data class CourtCaseDto(
     val time: CaseTimeDto,
     val description: CourtCaseDescriptionDto,
     val isPreliminary: Boolean = false,
-    val isVideoConference: Boolean = false
+    val isVideoConference: Boolean = false,
+    val result: CaseResultDto? = null
 )

@@ -8,7 +8,8 @@ data class CourtCase(
     val time: CaseTime,
     val description: CourtCaseDescription,
     val isPreliminary: Boolean = false,
-    val isVideoConference: Boolean = false
+    val isVideoConference: Boolean = false,
+    val result: CaseResult? = null
 ) {
     fun isPast(now: LocalDateTime, date: LocalDate): Boolean {
         val caseDateTime = LocalDateTime.of(date, java.time.LocalTime.of(time.hours, time.minutes))

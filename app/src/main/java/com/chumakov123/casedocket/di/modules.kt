@@ -160,7 +160,13 @@ val appModule = module {
             retryTaskUseCase = get()
         )
     }
-    viewModel { ConfirmedListViewModel(getConfirmedSchedulesUseCase = get()) }
+    viewModel {
+        ConfirmedListViewModel(
+            getConfirmedSchedulesUseCase = get(),
+            getConfirmedScheduleByIdUseCase = get(),
+            updateConfirmedScheduleUseCase = get()
+        )
+    }
     viewModel {
         SettingsViewModel(
             getSettingsUseCase = get(),

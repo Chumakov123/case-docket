@@ -1,5 +1,6 @@
 package com.chumakov123.casedocket.domain.model.court.draft
 
+import com.chumakov123.casedocket.domain.model.court.CaseResult
 import com.chumakov123.casedocket.domain.model.court.CaseTime
 import com.chumakov123.casedocket.domain.model.court.CourtCaseDescription
 
@@ -9,4 +10,5 @@ data class CourtCaseDraft(
     val description: CourtCaseDescription,
     val isPreliminary: Boolean = false,
     val isVideoConference: Boolean = false,
+    val result: CaseResult? = null
 )

@@ -14,5 +14,6 @@ fun CourtCase.toDraft(): CourtCaseDraft = CourtCaseDraft(
     time = this.time,
     description = this.description,
     isPreliminary = this.isPreliminary,
-    isVideoConference = this.isVideoConference
+    isVideoConference = this.isVideoConference,
+    result = this.result
 )
