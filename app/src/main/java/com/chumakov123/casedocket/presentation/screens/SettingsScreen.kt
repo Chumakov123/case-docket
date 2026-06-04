@@ -1,11 +1,10 @@
 package com.chumakov123.casedocket.presentation.screens
 
-import android.app.AlarmManager
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.provider.Settings as AndroidSettings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,14 +34,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.chumakov123.casedocket.R
 import com.chumakov123.casedocket.presentation.viewmodel.SettingsViewModel
 import org.koin.androidx.compose.koinViewModel
+import android.provider.Settings as AndroidSettings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +53,7 @@ fun SettingsScreen(
     val settings by viewModel.settings.collectAsState()
     val permissionsState by viewModel.permissionsState.collectAsState()
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     // Обновляем статус разрешений при каждом возвращении на экран (onResume)
     DisposableEffect(lifecycleOwner) {
@@ -94,19 +94,19 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(8.dp))
-            
+
             PermissionItem(
                 label = stringResource(R.string.permission_notifications),
                 granted = permissionsState.notificationsGranted,
                 onClick = { openAppSettings(context) }
             )
-            
+
             PermissionItem(
                 label = stringResource(R.string.permission_exact_alarms),
                 granted = permissionsState.exactAlarmsGranted,
                 onClick = { openExactAlarmSettings(context) }
             )
-            
+
             PermissionItem(
                 label = stringResource(R.string.permission_battery_optimization),
                 granted = permissionsState.batteryOptimizationsIgnored,
@@ -241,13 +241,14 @@ private fun openExactAlarmSettings(context: Context) {
     }
 }
 
+@SuppressLint("BatteryLife")
 private fun openBatteryOptimizationSettings(context: Context) {
     val intent = Intent(AndroidSettings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-        data = Uri.parse("package:${context.packageName}")
+        data = "package:${context.packageName}".toUri()
     }
     try {
         context.startActivity(intent)
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         val fallbackIntent = Intent(AndroidSettings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         context.startActivity(fallbackIntent)
     }

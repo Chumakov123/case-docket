@@ -46,13 +46,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         observeLanguage()
+        observeTheme()
 
         requestNotificationPermission()
 
         enableEdgeToEdge()
         setContent {
-            val settings by settingsViewModel.settings.collectAsStateWithLifecycle()
-            CaseDocketTheme(theme = settings.theme) {
+            CaseDocketTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -99,6 +99,23 @@ class MainActivity : AppCompatActivity() {
                 settingsViewModel.settings.collect { settings ->
                     val locales = LocaleListCompat.forLanguageTags(settings.language)
                     AppCompatDelegate.setApplicationLocales(locales)
+                }
+            }
+        }
+    }
+
+    private fun observeTheme() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                settingsViewModel.settings.collect { settings ->
+                    val mode = when (settings.theme) {
+                        "light" -> AppCompatDelegate.MODE_NIGHT_NO
+                        "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+                        else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+                    }
+                    if (AppCompatDelegate.getDefaultNightMode() != mode) {
+                        AppCompatDelegate.setDefaultNightMode(mode)
+                    }
                 }
             }
         }
