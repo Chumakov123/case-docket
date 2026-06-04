@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -194,8 +195,8 @@ fun ConfirmedListScreen(
                                 val cases = items.filterIsInstance<ConfirmedListItem.Case>()
                                 val isExpanded = expandedStates[scheduleId] ?: false
 
-                                item(key = "archived_header_$scheduleId") {
-                                    Column {
+                                stickyHeader(key = "archived_header_$scheduleId") {
+                                    Column(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
                                         Spacer(Modifier.height(8.dp))
                                         ScheduleHeaderItem(
                                             schedule = header.schedule,
@@ -247,8 +248,8 @@ fun ConfirmedListScreen(
                             val cases = items.filterIsInstance<ConfirmedListItem.Case>()
                             val isExpanded = expandedStates[scheduleId] ?: false
 
-                            item(key = "header_$scheduleId") {
-                                Column {
+                            stickyHeader(key = "header_$scheduleId") {
+                                Column(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
                                     Spacer(Modifier.height(8.dp))
                                     ScheduleHeaderItem(
                                         schedule = header.schedule,
