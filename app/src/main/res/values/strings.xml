@@ -42,6 +42,7 @@
     <string name="notification_timing">Notify before</string>
     <string name="notification_off">Off</string>
     <string name="notification_minutes">%d minutes</string>
+    <string name="notify_preliminary">Notify about preliminary hearings</string>
     <string name="russian" translatable="false">Русский</string>
     <string name="english" translatable="false">English</string>
     <string name="notification_channel_name">Upcoming cases</string>

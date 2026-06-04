@@ -58,4 +58,11 @@ class SettingsViewModel(
             updateSettingsUseCase(current.copy(notificationMinutes = minutes))
         }
     }
+
+    fun updateNotifyPreliminary(notify: Boolean) {
+        viewModelScope.launch {
+            val current = settings.value
+            updateSettingsUseCase(current.copy(notifyPreliminary = notify))
+        }
+    }
 }

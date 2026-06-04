@@ -25,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -172,6 +173,26 @@ fun SettingsScreen(
                     minutes = minutes,
                     selected = settings.notificationMinutes == minutes,
                     onClick = { viewModel.updateNotificationMinutes(minutes) }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.updateNotifyPreliminary(!settings.notifyPreliminary) }
+                    .padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.notify_preliminary),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Switch(
+                    checked = settings.notifyPreliminary,
+                    onCheckedChange = { viewModel.updateNotifyPreliminary(it) }
                 )
             }
         }

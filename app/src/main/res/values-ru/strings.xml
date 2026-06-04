@@ -41,6 +41,7 @@
     <string name="notification_timing">Уведомлять за</string>
     <string name="notification_off">Не уведомлять</string>
     <string name="notification_minutes">%d минут</string>
+    <string name="notify_preliminary">Уведомлять о ПСЗ</string>
     <string name="no_actual_schedule">Нет актуальных дел</string>
     <string name="cases_count">Дел: %d</string>
     <string name="edit_schedule">Редактировать расписание</string>

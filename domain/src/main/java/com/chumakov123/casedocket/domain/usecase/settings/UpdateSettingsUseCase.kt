@@ -13,7 +13,9 @@ class UpdateSettingsUseCase(
         val oldSettings = repository.observeSettings().first()
         repository.updateSettings(newSettings)
 
-        if (oldSettings.notificationMinutes != newSettings.notificationMinutes) {
+        if (oldSettings.notificationMinutes != newSettings.notificationMinutes ||
+            oldSettings.notifyPreliminary != newSettings.notifyPreliminary
+        ) {
             rescheduleNotificationsUseCase()
         }
     }

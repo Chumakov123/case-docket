@@ -2,6 +2,7 @@ package com.chumakov123.casedocket.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -20,6 +21,7 @@ class SettingsRepositoryImpl(
         private val THEME_KEY = stringPreferencesKey("theme")
         private val NOTIFICATION_MINUTES_KEY = intPreferencesKey("notification_minutes")
         private val LAST_TAB_KEY = intPreferencesKey("last_selected_tab")
+        private val NOTIFY_PRELIMINARY_KEY = booleanPreferencesKey("notify_preliminary")
     }
 
     override fun observeSettings(): Flow<Settings> =
@@ -31,7 +33,8 @@ class SettingsRepositoryImpl(
                 language = effectiveLang,
                 theme = preferences[THEME_KEY] ?: "system",
                 notificationMinutes = preferences[NOTIFICATION_MINUTES_KEY] ?: 10,
-                lastSelectedTab = preferences[LAST_TAB_KEY] ?: 0
+                lastSelectedTab = preferences[LAST_TAB_KEY] ?: 0,
+                notifyPreliminary = preferences[NOTIFY_PRELIMINARY_KEY] ?: true
             )
         }
 
@@ -41,6 +44,7 @@ class SettingsRepositoryImpl(
             preferences[THEME_KEY] = settings.theme
             preferences[NOTIFICATION_MINUTES_KEY] = settings.notificationMinutes
             preferences[LAST_TAB_KEY] = settings.lastSelectedTab
+            preferences[NOTIFY_PRELIMINARY_KEY] = settings.notifyPreliminary
         }
     }
 

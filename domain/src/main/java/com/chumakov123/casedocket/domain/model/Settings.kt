@@ -4,5 +4,6 @@ data class Settings(
     val language: String, // "ru" или "en"
     val theme: String,    // "system", "light", "dark"
     val notificationMinutes: Int, // 0 = отключено
-    val lastSelectedTab: Int = 0 // 0 - распознавание, 1 - расписание
+    val lastSelectedTab: Int = 0, // 0 - распознавание, 1 - расписание
+    val notifyPreliminary: Boolean = true
 )

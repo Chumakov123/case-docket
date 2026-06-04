@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed class EditDraftState {
     object Idle : EditDraftState()
@@ -135,11 +136,11 @@ class EditDraftViewModel(
         if (_mode.value !is EditMode.Draft) return
         autoSaveJob?.cancel()
         autoSaveJob = viewModelScope.launch {
-            delay(500)
+            delay(500.milliseconds)
             val id = (_mode.value as? EditMode.Draft)?.taskId ?: return@launch
             try {
                 updateDraftUseCase(id, draft)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
 
             }
         }

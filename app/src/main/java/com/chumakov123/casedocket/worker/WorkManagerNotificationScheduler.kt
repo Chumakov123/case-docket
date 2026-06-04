@@ -34,6 +34,11 @@ class WorkManagerNotificationScheduler(
 
         val futureCases = schedules.flatMap { schedule ->
             schedule.cases.mapNotNull { case ->
+                // Фильтр по ПСЗ
+                if (!settings.notifyPreliminary && case.isPreliminary) {
+                    return@mapNotNull null
+                }
+
                 val caseDateTime = LocalDateTime.of(
                     schedule.date.value,
                     LocalTime.of(case.time.hours, case.time.minutes)
