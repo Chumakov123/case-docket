@@ -124,4 +124,6 @@
     <string name="result_expertise">Expertise</string>
     <string name="result_restarted">Restarted</string>
     <string name="result_decision">Decision</string>
+    <string name="select_result">Specify result</string>
+    <string name="clear_result">Clear</string>
 </resources>

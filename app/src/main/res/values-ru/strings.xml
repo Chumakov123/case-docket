@@ -117,8 +117,10 @@
     <string name="video_conference">Видеоконференц-связь</string>
     <string name="vks">ВКС</string>
     <string name="result_recess">Перерыв</string>
-    <string name="result_adjournment">Отложение</string>
+    <string name="result_adjournment">Отложено</string>
     <string name="result_expertise">Экспертиза</string>
     <string name="result_restarted">Начато сначала</string>
-    <string name="result_decision">Решение</string>
+    <string name="result_decision">Вынесено решение</string>
+    <string name="select_result">Результат не указан</string>
+    <string name="clear_result">Очистить</string>
 </resources>

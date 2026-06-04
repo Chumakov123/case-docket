@@ -1,7 +1,6 @@
 package com.chumakov123.casedocket.presentation.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,24 +16,29 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -301,10 +305,15 @@ fun CaseItem(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            ResultSelector(
-                selectedResult = case.result,
-                onResultSelected = onResultSelected
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                ResultSelector(
+                    selectedResult = case.result,
+                    onResultSelected = onResultSelected
+                )
+            }
         }
     }
 }
@@ -314,33 +323,57 @@ fun ResultSelector(
     selectedResult: CaseResult?,
     onResultSelected: (CaseResult?) -> Unit
 ) {
-    val scrollState = rememberScrollState()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(scrollState),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        CaseResult.entries.forEach { result ->
-            val isSelected = selectedResult == result
-            SuggestionChip(
-                onClick = { onResultSelected(if (isSelected) null else result) },
-                label = {
-                    Text(
-                        text = stringResource(getResultStringRes(result)),
-                        style = MaterialTheme.typography.labelSmall
-                    )
-                },
-                colors = if (isSelected) {
-                    SuggestionChipDefaults.suggestionChipColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        labelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                } else {
-                    SuggestionChipDefaults.suggestionChipColors()
-                },
-                border = if (isSelected) null else SuggestionChipDefaults.suggestionChipBorder(true)
-            )
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        AssistChip(
+            onClick = { expanded = true },
+            label = {
+                Text(
+                    text = selectedResult?.let { stringResource(getResultStringRes(it)) }
+                        ?: stringResource(R.string.select_result),
+                    style = MaterialTheme.typography.labelMedium
+                )
+            },
+            colors = if (selectedResult != null) {
+                AssistChipDefaults.assistChipColors(
+                    labelColor = MaterialTheme.colorScheme.primary,
+                    leadingIconContentColor = MaterialTheme.colorScheme.primary,
+                    trailingIconContentColor = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                AssistChipDefaults.assistChipColors()
+            }
+        )
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            CaseResult.entries.forEach { result ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(getResultStringRes(result))) },
+                    onClick = {
+                        onResultSelected(result)
+                        expanded = false
+                    }
+                )
+            }
+            if (selectedResult != null) {
+                HorizontalDivider()
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            stringResource(R.string.clear_result),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        onResultSelected(null)
+                        expanded = false
+                    }
+                )
+            }
         }
     }
 }
