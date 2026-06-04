@@ -64,7 +64,7 @@
     <string name="pending_section">В обработке</string>
     <string name="ready_section">Готово к проверке</string>
     <string name="failed_section">Ошибки</string>
-    <string name="no_images_message">Нет изображений для распознавания. Вы можете сделать снимок или выбрать изображения из галереи, нажав на соответствующие кнопки в правой нижней части экрана</string>
+    <string name="no_images_message">Нет изображений для распознавания</string>
     <string name="image_number">Изображение #%d</string>
     <string name="status_label">Статус: %s</string>
     <string name="uploaded_label">Загружено: %s</string>
@@ -106,6 +106,7 @@
     <string name="add_case">Добавить дело</string>
     <string name="delete_case_confirmation_title">Удалить дело?</string>
     <string name="delete_case_confirmation_message">Вы уверены, что хотите удалить это дело из расписания?</string>
+    <string name="errors_remaining">Требуется исправлений: %d</string>
 
     <string name="permissions">Разрешения</string>
     <string name="permission_notifications">Уведомления</string>

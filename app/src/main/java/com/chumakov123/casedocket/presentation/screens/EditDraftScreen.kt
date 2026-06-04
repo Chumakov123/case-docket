@@ -2,11 +2,14 @@ package com.chumakov123.casedocket.presentation.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -61,6 +64,19 @@ fun EditDraftScreen(
     val validation by viewModel.validation.collectAsState()
     val mode by viewModel.mode.collectAsState()
 
+    val errorCount = remember(validation) {
+        var count = 0
+        if (validation.dateError) count++
+        if (validation.judgeError) count++
+        if (validation.casesError) count++
+        validation.casesValidations.forEach {
+            if (it.caseNumberError) count++
+            if (it.timeError) count++
+            if (it.descriptionError) count++
+        }
+        count
+    }
+
     var showDeleteConfirmationDialog by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
@@ -76,13 +92,22 @@ fun EditDraftScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        when (mode) {
-                            is EditMode.Draft -> stringResource(R.string.edit_draft_title)
-                            is EditMode.Confirmed -> stringResource(R.string.edit_confirmed_title)
-                            null -> stringResource(R.string.loading)
+                    Column {
+                        Text(
+                            when (mode) {
+                                is EditMode.Draft -> stringResource(R.string.edit_draft_title)
+                                is EditMode.Confirmed -> stringResource(R.string.edit_confirmed_title)
+                                null -> stringResource(R.string.loading)
+                            }
+                        )
+                        if (errorCount > 0) {
+                            Text(
+                                text = stringResource(R.string.errors_remaining, errorCount),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
                         }
-                    )
+                    }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
@@ -115,16 +140,26 @@ fun EditDraftScreen(
                                     contentDescription = stringResource(R.string.reject)
                                 )
                             }
-                            if (validation.isValid) {
-                                FloatingActionButton(
-                                    onClick = { viewModel.confirmDraft(onNavigateBack) },
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = stringResource(R.string.confirm)
-                                    )
-                                }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FloatingActionButton(
+                                onClick = {
+                                    if (validation.isValid) {
+                                        viewModel.confirmDraft(onNavigateBack)
+                                    }
+                                },
+                                containerColor = if (validation.isValid)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (validation.isValid)
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            ) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = stringResource(R.string.confirm)
+                                )
                             }
                         }
 
@@ -140,16 +175,26 @@ fun EditDraftScreen(
                                     contentDescription = stringResource(R.string.cancel)
                                 )
                             }
-                            if (validation.isValid) {
-                                FloatingActionButton(
-                                    onClick = { viewModel.saveConfirmed(onNavigateBack) },
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ) {
-                                    Icon(
-                                        Icons.Default.Check,
-                                        contentDescription = stringResource(R.string.save)
-                                    )
-                                }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FloatingActionButton(
+                                onClick = {
+                                    if (validation.isValid) {
+                                        viewModel.saveConfirmed(onNavigateBack)
+                                    }
+                                },
+                                containerColor = if (validation.isValid)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.surfaceVariant,
+                                contentColor = if (validation.isValid)
+                                    MaterialTheme.colorScheme.onPrimary
+                                else
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                            ) {
+                                Icon(
+                                    Icons.Default.Check,
+                                    contentDescription = stringResource(R.string.save)
+                                )
                             }
                         }
 
