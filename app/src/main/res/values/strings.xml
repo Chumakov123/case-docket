@@ -113,4 +113,5 @@
     <string name="permission_notifications">Notifications</string>
     <string name="permission_exact_alarms">Exact alarms</string>
     <string name="permission_battery_optimization">Ignore battery optimization</string>
+    <string name="schedule">Schedule</string>
 </resources>

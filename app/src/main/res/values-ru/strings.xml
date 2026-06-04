@@ -41,15 +41,15 @@
     <string name="notification_timing">Уведомлять за</string>
     <string name="notification_off">Не уведомлять</string>
     <string name="notification_minutes">%d минут</string>
-    <string name="no_actual_schedule">Нет актуальных судебных дел</string>
+    <string name="no_actual_schedule">Нет актуальных дел</string>
     <string name="cases_count">Дел: %d</string>
     <string name="edit_schedule">Редактировать расписание</string>
     <string name="show_past">Показать прошедшие</string>
     <string name="hide_past">Скрыть прошедшие</string>
     <string name="notification_channel_name">Предстоящие дела</string>
     <string name="notification_channel_description">Уведомления о предстоящих судебных заседаниях</string>
-    <string name="notification_title_single">Судебное дело в %s</string>
-    <string name="notification_title_multiple">Судебные дела в %s (%d)</string>
+    <string name="notification_title_single">Процесс на %s</string>
+    <string name="notification_title_multiple">Процессы на %s (%d)</string>
     <string name="notification_summary">Нажмите для просмотра</string>
     <string name="recognition">Распознавание</string>
     <string name="court_cases">Судебные дела</string>
@@ -110,4 +110,5 @@
     <string name="permission_notifications">Уведомления</string>
     <string name="permission_exact_alarms">Точные будильники</string>
     <string name="permission_battery_optimization">Игнорировать оптимизацию батареи</string>
+    <string name="schedule">Расписание</string>
 </resources>

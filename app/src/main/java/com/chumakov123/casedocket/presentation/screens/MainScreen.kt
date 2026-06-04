@@ -39,7 +39,7 @@ fun MainScreen(
                     Text(
                         when (selectedTab) {
                             0 -> stringResource(R.string.recognition)
-                            else -> stringResource(R.string.court_cases)
+                            else -> stringResource(R.string.schedule)
                         }
                     )
                 },
@@ -65,7 +65,7 @@ fun MainScreen(
                     selected = selectedTab == 1,
                     onClick = { viewModel.selectTab(1) },
                     icon = { Icon(Icons.Default.CalendarMonth, contentDescription = null) },
-                    label = { Text(stringResource(R.string.court_cases)) }
+                    label = { Text(stringResource(R.string.schedule)) }
                 )
             }
         }
