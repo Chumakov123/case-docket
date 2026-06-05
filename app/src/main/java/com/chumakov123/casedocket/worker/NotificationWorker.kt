@@ -7,6 +7,7 @@ import com.chumakov123.casedocket.data.dto.CourtCaseDto
 import com.chumakov123.casedocket.data.mapper.toDomain
 import com.chumakov123.casedocket.util.NotificationHelper
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 
 class NotificationWorker(
     context: Context,
@@ -14,15 +15,22 @@ class NotificationWorker(
 ) : Worker(context, params) {
 
     override fun doWork(): Result {
-        val casesJson = inputData.getString(KEY_CASES) ?: return Result.failure()
+        Timber.d("NotificationWorker started.")
+        val casesJson = inputData.getString(KEY_CASES) ?: run {
+            Timber.e("casesJson is null. Returning failure.")
+            return Result.failure()
+        }
         val scheduleId = inputData.getLong(KEY_SCHEDULE_ID, -1L)
         val scheduleDate = inputData.getString(KEY_SCHEDULE_DATE) ?: ""
         val judge = inputData.getString(KEY_JUDGE) ?: ""
+
+        Timber.d("Received data in NotificationWorker - scheduleId: $scheduleId, scheduleDate: $scheduleDate, judge: $judge, casesJson: $casesJson")
 
         val json = Json { ignoreUnknownKeys = true }
         val cases = try {
             json.decodeFromString<List<CourtCaseDto>>(casesJson).map { it.toDomain() }
         } catch (e: Exception) {
+            Timber.e(e, "Error decoding casesJson: $casesJson. Returning failure.")
             return Result.failure()
         }
 
@@ -32,6 +40,11 @@ class NotificationWorker(
             scheduleId = scheduleId,
             scheduleDate = scheduleDate,
             judge = judge
+        )
+        Timber.d(
+            "Notification shown for scheduleId: $scheduleId, cases: ${
+                cases.map { it.caseNumber }.toList()
+            }"
         )
         return Result.success()
     }

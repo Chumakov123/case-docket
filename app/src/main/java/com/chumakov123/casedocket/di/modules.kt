@@ -5,6 +5,8 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.chumakov123.casedocket.data.alarm.ActiveAlarmStore
 import com.chumakov123.casedocket.data.alarm.DataStoreActiveAlarmStore
+import com.chumakov123.casedocket.data.alarm.DataStoreNotifiedAlarmStore
+import com.chumakov123.casedocket.data.alarm.NotifiedAlarmStore
 import com.chumakov123.casedocket.data.local.AppDatabase
 import com.chumakov123.casedocket.data.local.dao.ConfirmedScheduleDao
 import com.chumakov123.casedocket.data.local.dao.RecognitionTaskDao
@@ -194,7 +196,8 @@ val appModule = module {
             settingsRepository = get(),
             json = get(),
             workManagerScheduler = get<WorkManagerNotificationScheduler>(),
-            activeAlarmStore = get()
+            activeAlarmStore = get(),
+            notifiedAlarmStore = get()
         )
     }
 }
@@ -240,6 +243,7 @@ val dataModule = module {
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
 
     single<ActiveAlarmStore> { DataStoreActiveAlarmStore(get()) }
+    single<NotifiedAlarmStore> { DataStoreNotifiedAlarmStore(get()) }
 }
 
 val appModules = listOf(

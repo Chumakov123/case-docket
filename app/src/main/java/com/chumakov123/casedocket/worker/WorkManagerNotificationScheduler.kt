@@ -10,9 +10,11 @@ import com.chumakov123.casedocket.domain.repository.NotificationScheduler
 import com.chumakov123.casedocket.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneOffset
 import java.util.concurrent.TimeUnit
 
 class WorkManagerNotificationScheduler(
@@ -24,11 +26,15 @@ class WorkManagerNotificationScheduler(
     private val workManager = WorkManager.getInstance(context)
 
     override suspend fun scheduleAllNotifications(schedules: List<CourtSchedule>) {
+        Timber.d("Scheduling all notifications. Total schedules: ${schedules.size}")
         cancelAllNotifications()
 
         val settings = settingsRepository.observeSettings().first()
         val notificationMinutes = settings.notificationMinutes
-        if (notificationMinutes == 0) return
+        if (notificationMinutes == 0) {
+            Timber.d("Notifications disabled (notificationMinutes is 0). No notifications will be scheduled.")
+            return
+        }
 
         val now = LocalDateTime.now()
 
@@ -36,6 +42,7 @@ class WorkManagerNotificationScheduler(
             schedule.cases.mapNotNull { case ->
                 // Фильтр по ПСЗ
                 if (!settings.notifyPreliminary && case.isPreliminary) {
+                    Timber.d("Filtering out preliminary case: ${case.caseNumber}")
                     return@mapNotNull null
                 }
 
@@ -65,19 +72,24 @@ class WorkManagerNotificationScheduler(
             )
 
             val delay = Duration.between(now, notifyTime).toMillis()
-            if (delay < 0) return@forEach
+            if (delay < 0) {
+                Timber.d("Notification for schedule ${firstSchedule.id} with time $notifyTime is in the past. Skipping.")
+                return@forEach
+            }
 
             val request = OneTimeWorkRequestBuilder<NotificationWorker>()
                 .setInitialDelay(delay, TimeUnit.MILLISECONDS)
                 .setInputData(inputData)
-                .addTag("notification_${firstSchedule.id}_${cases.hashCode()}")
+                .addTag("notification_${firstSchedule.id}_${notifyTime.toEpochSecond(ZoneOffset.UTC)}")
                 .build()
 
             workManager.enqueue(request)
+            Timber.d("Scheduled notification for schedule ID: ${firstSchedule.id}, notify time: $notifyTime, delay: $delay ms, cases: ${cases.map { it.caseNumber }}")
         }
     }
 
     override suspend fun cancelAllNotifications() {
+        Timber.d("Cancelling all existing notifications.")
         workManager.cancelAllWork()
     }
 }

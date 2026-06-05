@@ -5,8 +5,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.util.Log
 import com.chumakov123.casedocket.data.alarm.ActiveAlarmStore
+import com.chumakov123.casedocket.data.alarm.NotifiedAlarmStore
 import com.chumakov123.casedocket.data.mapper.toDto
 import com.chumakov123.casedocket.domain.model.court.CourtSchedule
 import com.chumakov123.casedocket.domain.repository.NotificationScheduler
@@ -14,6 +14,7 @@ import com.chumakov123.casedocket.domain.repository.SettingsRepository
 import com.chumakov123.casedocket.receiver.AlarmReceiver
 import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -23,21 +24,27 @@ class AlarmManagerNotificationScheduler(
     private val settingsRepository: SettingsRepository,
     private val json: Json,
     private val workManagerScheduler: NotificationScheduler,
-    private val activeAlarmStore: ActiveAlarmStore
+    private val activeAlarmStore: ActiveAlarmStore,
+    private val notifiedAlarmStore: NotifiedAlarmStore
 ) : NotificationScheduler {
 
     override suspend fun scheduleAllNotifications(schedules: List<CourtSchedule>) {
+        Timber.d("Scheduling all notifications. Total schedules: ${schedules.size}")
         cancelAllNotifications()
+        notifiedAlarmStore.clearOld(24 * 60 * 60 * 1000L)
 
         if (!hasExactAlarmPermission()) {
-            Log.d("NotificationScheduler", "No exact alarm permission, falling back to WorkManager")
+            Timber.d("No exact alarm permission, falling back to WorkManager")
             workManagerScheduler.scheduleAllNotifications(schedules)
             return
         }
 
         val settings = settingsRepository.observeSettings().first()
         val notificationMinutes = settings.notificationMinutes
-        if (notificationMinutes == 0) return
+        if (notificationMinutes == 0) {
+            Timber.d("Notifications disabled (notificationMinutes is 0). No notifications will be scheduled.")
+            return
+        }
 
         val now = LocalDateTime.now()
 
@@ -45,6 +52,7 @@ class AlarmManagerNotificationScheduler(
             schedule.cases.mapNotNull { case ->
                 // Фильтр по ПСЗ
                 if (!settings.notifyPreliminary && case.isPreliminary) {
+                    Timber.d("Filtering out preliminary case: ${case.caseNumber}")
                     return@mapNotNull null
                 }
 
@@ -71,14 +79,17 @@ class AlarmManagerNotificationScheduler(
 
             val casesJson = json.encodeToString(cases.map { it.toDto() })
 
+            val requestCode = (firstSchedule.id.hashCode() + notifyTime.toEpochSecond(
+                ZoneId.systemDefault().rules.getOffset(notifyTime)
+            ).hashCode()).hashCode()
+
             val intent = Intent(context, AlarmReceiver::class.java).apply {
                 putExtra(AlarmReceiver.EXTRA_CASES, casesJson)
                 putExtra(AlarmReceiver.EXTRA_SCHEDULE_ID, firstSchedule.id)
                 putExtra(AlarmReceiver.EXTRA_SCHEDULE_DATE, firstSchedule.date.toDisplayFormat())
                 putExtra(AlarmReceiver.EXTRA_JUDGE, firstSchedule.judge.text)
+                putExtra(AlarmReceiver.EXTRA_REQUEST_CODE, requestCode)
             }
-
-            val requestCode = (notifyTime.hashCode() + cases.hashCode()).hashCode()
 
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -91,7 +102,12 @@ class AlarmManagerNotificationScheduler(
                 notifyTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
             } else {
                 // Если время уведомления (за X минут) уже прошло, но дело еще не началось,
-                // ставим будильник на "сейчас + 1 секунда"
+                // проверяем, не показывали ли мы его уже
+                if (notifiedAlarmStore.isNotified(requestCode)) {
+                    Timber.d("Notification for requestCode $requestCode already shown. Skipping.")
+                    return@forEach
+                }
+                // Если нет — ставим будильник на "сейчас + 1 секунда"
                 System.currentTimeMillis() + 1000
             }
 
@@ -102,10 +118,16 @@ class AlarmManagerNotificationScheduler(
             )
 
             activeAlarmStore.addRequestCode(requestCode)
+            Timber.d(
+                "Scheduled alarm for schedule ID: ${firstSchedule.id}, notify time: $notifyTime, requestCode: $requestCode, delay: ${triggerTime - System.currentTimeMillis()} ms, cases: ${
+                    cases.map { it.caseNumber }.toList()
+                }"
+            )
         }
     }
 
     override suspend fun cancelAllNotifications() {
+        Timber.d("Cancelling all existing alarms.")
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val requestCodes = activeAlarmStore.getAllRequestCodes()
 
@@ -119,11 +141,13 @@ class AlarmManagerNotificationScheduler(
             )
             if (pendingIntent != null) {
                 alarmManager.cancel(pendingIntent)
+                Timber.d("Cancelled alarm with requestCode: $requestCode")
             }
         }
 
         activeAlarmStore.clearAll()
         workManagerScheduler.cancelAllNotifications()
+        Timber.d("Cleared all active alarm request codes and cancelled WorkManager notifications.")
     }
 
     private fun hasExactAlarmPermission(): Boolean {
