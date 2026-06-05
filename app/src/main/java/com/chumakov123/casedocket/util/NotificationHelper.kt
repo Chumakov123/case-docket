@@ -56,8 +56,11 @@ object NotificationHelper {
         val firstCase = cases.first()
         val timeString = firstCase.time.toHHMM()
 
+        val psz = if (firstCase.isPreliminary) "[${context.getString(R.string.psz)}] " else ""
+        val vks = if (firstCase.isVideoConference) "[${context.getString(R.string.vks)}] " else ""
+
         val title = if (cases.size == 1) {
-            context.getString(R.string.notification_title_single, timeString)
+            "${context.getString(R.string.notification_title_single, timeString)} $psz$vks".trim()
         } else {
             context.getString(R.string.notification_title_multiple, timeString, cases.size)
         }
@@ -72,11 +75,8 @@ object NotificationHelper {
 
         val notification = if (cases.size == 1) {
             val case = cases.first()
-            val pszPrefix = if (case.isPreliminary) "[${context.getString(R.string.psz)}] " else ""
-            val vksPrefix =
-                if (case.isVideoConference) "[${context.getString(R.string.vks)}] " else ""
             builder.setContentTitle(title)
-                .setContentText("$pszPrefix$vksPrefix${case.caseNumber} ($judge)")
+                .setContentText("${case.caseNumber} ($judge)")
                 .setStyle(NotificationCompat.BigTextStyle().bigText(case.description.text))
                 .build()
         } else {
@@ -84,11 +84,11 @@ object NotificationHelper {
                 .setBigContentTitle(title)
                 .setSummaryText(context.getString(R.string.notification_summary))
             cases.forEachIndexed { index, case ->
-                val pszPrefix =
-                    if (case.isPreliminary) "${context.getString(R.string.psz)} " else ""
-                val vksPrefix =
-                    if (case.isVideoConference) "${context.getString(R.string.vks)} " else ""
-                inboxStyle.addLine("${index + 1}. $pszPrefix$vksPrefix${case.description.text}")
+                val casePsz =
+                    if (case.isPreliminary) "[${context.getString(R.string.psz)}] " else ""
+                val caseVks =
+                    if (case.isVideoConference) "[${context.getString(R.string.vks)}] " else ""
+                inboxStyle.addLine("${index + 1}. $casePsz$caseVks${case.description.text}")
             }
 
             builder.setContentTitle(title)
