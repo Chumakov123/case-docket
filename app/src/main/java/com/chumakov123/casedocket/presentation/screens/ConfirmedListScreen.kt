@@ -486,10 +486,16 @@ fun ResultSelector(
     onResultSelected: (CaseResult?) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var showClearAction by remember { mutableStateOf(false) }
+
+    fun openMenu() {
+        showClearAction = selectedResult != null
+        expanded = true
+    }
 
     Box {
         AssistChip(
-            onClick = { expanded = true },
+            onClick = ::openMenu,
             label = {
                 Text(
                     text = selectedResult?.let { stringResource(getResultStringRes(it)) }
@@ -514,12 +520,13 @@ fun ResultSelector(
                     }
                 )
             }
-            if (selectedResult != null) {
+
+            if (showClearAction) {
                 HorizontalDivider()
                 DropdownMenuItem(
                     text = {
                         Text(
-                            stringResource(R.string.clear_result),
+                            text = stringResource(R.string.clear_result),
                             color = MaterialTheme.colorScheme.error
                         )
                     },

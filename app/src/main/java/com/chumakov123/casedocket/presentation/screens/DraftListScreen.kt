@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -64,6 +66,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -98,13 +101,13 @@ fun DraftListScreen(
     viewModel: DraftListViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
+    val layoutDirection = LocalLayoutDirection.current
     val taskGroups by viewModel.taskGroups.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val errorMessage by viewModel.errorMessage.collectAsState()
     val hasCamera = context.packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)
 
     val listState = rememberLazyListState()
-
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -141,7 +144,6 @@ fun DraftListScreen(
     }
 
     val snackbarHostState = remember { SnackbarHostState() }
-
     val errorText = errorMessage?.toDisplayString()
 
     LaunchedEffect(errorText) {
@@ -206,15 +208,20 @@ fun DraftListScreen(
             }
         }
     ) { paddingValues ->
+        val isEmpty = taskGroups.pendingProcessing.isEmpty() &&
+                taskGroups.completed.isEmpty() &&
+                taskGroups.failed.isEmpty()
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(
+                    start = paddingValues.calculateStartPadding(layoutDirection),
+                    end = paddingValues.calculateEndPadding(layoutDirection),
+                    top = 0.dp,
+                    bottom = 0.dp
+                )
         ) {
-            val isEmpty = taskGroups.pendingProcessing.isEmpty() &&
-                    taskGroups.completed.isEmpty() &&
-                    taskGroups.failed.isEmpty()
-
             AnimatedVisibility(
                 visible = isEmpty,
                 enter = fadeIn(),
@@ -244,7 +251,12 @@ fun DraftListScreen(
                         state = listState,
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(16.dp)
+                        contentPadding = PaddingValues(
+                            start = 16.dp,
+                            top = 0.dp,
+                            end = 16.dp,
+                            bottom = if (hasCamera) 176.dp else 112.dp
+                        )
                     ) {
                         if (taskGroups.pendingProcessing.isNotEmpty()) {
                             item(key = "header_pending") {
@@ -431,7 +443,10 @@ fun DraftTaskItem(task: RecognitionTask, onEditClick: () -> Unit) {
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = stringResource(R.string.uploaded_label, formatDate(task.createdAt)),
+                            text = stringResource(
+                                R.string.uploaded_label,
+                                formatDate(task.createdAt)
+                            ),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
